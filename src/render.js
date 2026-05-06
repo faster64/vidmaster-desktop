@@ -318,7 +318,7 @@ export async function runRender(config) {
 
   // Validate overlay folder exists
   if (!fs.existsSync(overlayFolder)) {
-    throw new Error(`Overlay folder not found: ${overlayFolder}`);
+    throw new Error(`Không tìm thấy folder overlays: ${overlayFolder}`);
   }
 
   const overlayFiles = getFilesFromFolder(overlayFolder);
@@ -335,7 +335,7 @@ export async function runRender(config) {
   // 1. Check overlay videos
   const totalOverlays = overlayFiles.length;
   if (totalOverlays === 0) {
-    throw new Error("No overlay videos found in overlays folder!");
+    throw new Error(`Folder overlays trống, không có video nào: ${overlayFolder}`);
   }
 
   // 2. Determine background video source
@@ -350,7 +350,7 @@ export async function runRender(config) {
     runner.log("info", "Using videos from combined_videos folder");
   } else {
     if (!fs.existsSync(backgroundFolder)) {
-      throw new Error(`Background folder not found: ${backgroundFolder}`);
+      throw new Error(`Không tìm thấy folder backgrounds: ${backgroundFolder}`);
     }
     const backgroundFolders = fs
       .readdirSync(backgroundFolder)
@@ -363,7 +363,7 @@ export async function runRender(config) {
 
   // 3. Check background folder count
   if (totalVideoBackgrounds === 0) {
-    throw new Error("No background subfolders found!");
+    throw new Error("Folder backgrounds không có subfolder nào");
   }
 
   // 4. Overview log

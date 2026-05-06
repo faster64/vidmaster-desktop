@@ -4,29 +4,13 @@ import { renderRender } from "./screens/render.js";
 import { renderSnow } from "./screens/snow.js";
 import { renderTrim } from "./screens/trim.js";
 import { renderCutBg } from "./screens/cutBg.js";
-import { renderThumb } from "./screens/thumb.js";
-import { renderConcat } from "./screens/concat.js";
-import { renderRename } from "./screens/rename.js";
 import { renderQueue } from "./screens/queue.js";
 import { renderSettings } from "./screens/settings.js";
 import { renderOnboarding } from "./screens/onboarding.js";
-
-const toastContainer = document.createElement("div");
-toastContainer.className = "toast-container";
-document.body.appendChild(toastContainer);
-
-function toast({ message, kind = "success", onClick }) {
-  const el = document.createElement("div");
-  el.className = `toast ${kind}`;
-  el.textContent = message;
-  if (onClick) el.addEventListener("click", onClick);
-  toastContainer.appendChild(el);
-  setTimeout(() => el.remove(), 5000);
-}
+import { toast } from "./components/toast.js";
 
 const screens = {
   render: renderRender, snow: renderSnow, trim: renderTrim, cutBg: renderCutBg,
-  thumb: renderThumb, concat: renderConcat, rename: renderRename,
   queue: renderQueue, settings: renderSettings,
 };
 
@@ -81,5 +65,5 @@ window.api.queue.onUpdate((state) => {
   }
 });
 
-const TASK_LABELS = { render: "Render Video", snow: "Snow", trim: "Trim", cutBg: "Cut BG", thumb: "Thumb", concat: "Concat", rename: "Rename" };
+const TASK_LABELS = { render: "Render Video", snow: "Snow", trim: "Trim", cutBg: "Cut BG" };
 function labelOf(t) { return TASK_LABELS[t] || t; }

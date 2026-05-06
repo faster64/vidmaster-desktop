@@ -74,7 +74,7 @@ Update Plan/spec docs so the cumulative test count stays accurate (cosmetic but 
 
 ## Examples
 
-The Plan 1 ports of `rename`, `trim`, `cutBg`, `thumb`, `snow`, `concat`, `render` are the seven worked examples — each followed steps 1–3 above. Plan 2 then added each one through steps 4–8.
+The Plan 1 ports of `trim`, `cutBg`, `snow`, `render` are the four worked examples — each followed steps 1–3 above. Plan 2 then added each one through steps 4–8.
 
 ## Pitfalls
 

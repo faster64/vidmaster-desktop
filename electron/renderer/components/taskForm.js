@@ -1,3 +1,6 @@
+import { validateConfig } from "./validation.js";
+import { toast } from "./toast.js";
+
 export function taskFormShell({ icon, title, description, fields, advanced, taskType, lastConfig, defaults }) {
   return `
     <div class="screen-header">${icon} ${title}</div>
@@ -32,7 +35,7 @@ function fieldHtml(f, lastConfig, defaults) {
     return `
       <div class="field" data-path="${f.path}" data-kind="number">
         <label>🔢 ${f.label}</label>
-        <input type="number" name="${f.path}" value="${escape(v)}" ${f.min != null ? `min="${f.min}"` : ""}>
+        <input type="number" name="${f.path}" value="${escape(v)}" ${f.min != null ? `min="${f.min}"` : ""} ${f.max != null ? `max="${f.max}"` : ""} ${f.step != null ? `step="${f.step}"` : ""}>
         ${f.help ? `<div class="help">${f.help}</div>` : ""}
       </div>`;
   }
@@ -94,6 +97,11 @@ export function bindTaskForm(formEl, { fields, taskType, defaults }) {
 
   formEl.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    formEl.querySelectorAll("details").forEach((d) => { d.open = true; });
+
+    if (!formEl.reportValidity()) return;
+
     const config = {};
     for (const input of formEl.querySelectorAll("input")) {
       const name = input.name;
@@ -104,7 +112,21 @@ export function bindTaskForm(formEl, { fields, taskType, defaults }) {
       else v = input.value;
       setValue(name, config, v);
     }
+
+    const errors = await validateConfig({
+      fields,
+      config,
+      fsExists: (p) => window.api.fs.exists(p),
+    });
+
+    if (errors.length > 0) {
+      const summary = errors.map((e) => `${e.label} (${e.reason})`).join(", ");
+      toast({ kind: "error", message: `⚠️ Thiếu dữ liệu: ${summary}` });
+      return;
+    }
+
     await window.api.queue.add({ type: taskType, config });
     await window.api.settings.set({ [`lastConfig.${taskType}`]: config });
+    toast({ kind: "success", message: "✅ Đã thêm vào hàng đợi" });
   });
 }

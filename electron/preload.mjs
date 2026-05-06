@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld("api", {
     getWorkspace: () => ipcRenderer.invoke("app:getWorkspace"),
     ensureWorkspace: (root) => ipcRenderer.invoke("app:ensureWorkspace", root),
   },
+  fs: {
+    exists: (p) => ipcRenderer.invoke("fs:exists", p),
+  },
   log: {
     getRecent: (jobId) => ipcRenderer.invoke("log:getRecent", jobId),
   },

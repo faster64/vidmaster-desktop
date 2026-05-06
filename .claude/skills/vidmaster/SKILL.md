@@ -7,7 +7,7 @@ description: Use when working on the VidMaster desktop app — adding tasks, ref
 
 ## When to use
 
-Invoke this skill whenever the request touches the VidMaster project — typically when the working directory is `d:\Project2\vidmaster-desktop` (or a clone), or when the user mentions "VidMaster", "vid-master", or one of the seven task names (Render, Snow, Trim, CutBg, Thumb, Concat, Rename).
+Invoke this skill whenever the request touches the VidMaster project — typically when the working directory is `d:\Project2\vidmaster-desktop` (or a clone), or when the user mentions "VidMaster", "vid-master", or one of the four task names (Render, Snow, Trim, CutBg).
 
 ## Index of sub-skills
 

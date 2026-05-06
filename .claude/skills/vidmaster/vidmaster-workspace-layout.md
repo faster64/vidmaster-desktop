@@ -17,15 +17,12 @@ The user's workspace is a single root directory containing the following subfold
 
 | Subfolder | Used by |
 |---|---|
-| `overlays/` | Render (input), Thumb (input thumbnails) |
+| `overlays/` | Render (input) |
 | `backgrounds/` | Render (input), CutBg (input + output) |
 | `combined_videos/` | Render (intermediate) |
-| `done/` | Render (output), Concat (input), Trim (output) |
+| `done/` | Render (output), Trim (output) |
 | `input/` | Snow (input), Trim (input) |
-| `output/` | Snow (output), Concat (output) |
-| `thumbs/` | Concat (input thumbs), Rename (target), Thumb (output) |
-| `temp/` | Concat (scratch) |
-| `overlays_convert/` | Thumb (overlay images) |
+| `output/` | Snow (output) |
 
 `REQUIRED_SUBFOLDERS` in `electron/workspace.js` is the source of truth. To add a new subfolder, also update `defaultsForTask()`.
 

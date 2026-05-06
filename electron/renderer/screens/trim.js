@@ -5,8 +5,8 @@ export async function renderTrim(el) {
   const s = await window.api.settings.get();
   const defaults = { input: `${ws}\\input`, output: `${ws}\\done`, segmentSeconds: 30, replace: false };
   const fields = [
-    { type: "folder",   path: "input",          label: "Folder input" },
-    { type: "folder",   path: "output",         label: "Folder output" },
+    { type: "folder",   path: "input",          label: "Folder input",  required: true, mustExist: "folder" },
+    { type: "folder",   path: "output",         label: "Folder output", required: true },
     { type: "number",   path: "segmentSeconds", label: "Độ dài segment (giây)", min: 1 },
     { type: "checkbox", path: "replace",        label: "Xoá file gốc sau khi cắt" },
   ];

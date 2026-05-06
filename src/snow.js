@@ -62,7 +62,7 @@ export async function runSnow(config) {
 
   // Validate snowAsset exists upfront
   if (!fs.existsSync(snowAsset)) {
-    throw new Error(`snowAsset not found: ${snowAsset}`);
+    throw new Error(`Không tìm thấy file snowAsset: ${snowAsset}`);
   }
 
   fs.mkdirSync(output, { recursive: true });

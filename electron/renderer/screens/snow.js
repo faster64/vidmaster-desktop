@@ -5,9 +5,9 @@ export async function renderSnow(el) {
   const s = await window.api.settings.get();
   const defaults = { input: `${ws}\\input`, output: `${ws}\\output`, snowAsset: "", duration: 12 };
   const fields = [
-    { type: "folder", path: "input",      label: "Folder ảnh đầu vào" },
-    { type: "folder", path: "output",     label: "Folder video output" },
-    { type: "text",   path: "snowAsset",  label: "Đường dẫn snow.mov", help: "File snow overlay (.mov hoặc .mp4)" },
+    { type: "folder", path: "input",      label: "Folder ảnh đầu vào",          required: true, mustExist: "folder" },
+    { type: "folder", path: "output",     label: "Folder video output",         required: true },
+    { type: "text",   path: "snowAsset",  label: "Đường dẫn snow.mov", help: "File snow overlay (.mov hoặc .mp4)", required: true, mustExist: "file" },
     { type: "number", path: "duration",   label: "Thời lượng video (giây)", min: 1 },
   ];
   el.innerHTML = taskFormShell({

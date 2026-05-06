@@ -27,5 +27,5 @@ export function mountQueueDock(el) {
   window.api.queue.getState().then(render);
 }
 
-const LABELS = { render: "Render", snow: "Snow", trim: "Trim", cutBg: "CutBg", thumb: "Thumb", concat: "Concat", rename: "Rename" };
+const LABELS = { render: "Render", snow: "Snow", trim: "Trim", cutBg: "CutBg" };
 function labelFor(type) { return LABELS[type] || type; }

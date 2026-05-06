@@ -8,6 +8,7 @@ import { registerSettingsIpc } from "./ipc/settings.js";
 import { registerDialogIpc } from "./ipc/dialog.js";
 import { registerShellIpc } from "./ipc/shell.js";
 import { registerAppIpc } from "./ipc/app.js";
+import { registerFsIpc } from "./ipc/fs.js";
 import { detectEncoder } from "./gpuDetect.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,7 +24,7 @@ function createWindow() {
     width: 1200, height: 800, minWidth: 900, minHeight: 600,
     title: "VidMaster",
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.mjs"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
@@ -31,7 +32,16 @@ function createWindow() {
   });
   mainWindow.removeMenu();
   mainWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
-  mainWindow.webContents.openDevTools({ mode: "right" });
+
+  mainWindow.webContents.on("before-input-event", (event, input) => {
+    if (input.type !== "keyDown") return;
+    const isF12 = input.key === "F12";
+    const isCtrlShiftI = input.control && input.shift && input.key.toLowerCase() === "i";
+    if (isF12 || isCtrlShiftI) {
+      mainWindow.webContents.toggleDevTools();
+      event.preventDefault();
+    }
+  });
 }
 
 app.whenReady().then(async () => {
@@ -46,6 +56,7 @@ app.whenReady().then(async () => {
   registerDialogIpc();
   registerShellIpc(() => log.transports.file.getFile().path);
   registerAppIpc(() => settings);
+  registerFsIpc();
   createWindow();
 });
 

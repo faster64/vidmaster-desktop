@@ -10,7 +10,7 @@ Run on a clean Windows 10 or 11 VM (no Node, no dev tools installed).
 ## First launch
 - [ ] App launches from shortcut.
 - [ ] Onboarding asks for workspace folder.
-- [ ] After choosing folder, all 9 subfolders are created (`overlays`, `backgrounds`, `combined_videos`, `done`, `input`, `output`, `thumbs`, `temp`, `overlays_convert`).
+- [ ] After choosing folder, all 6 subfolders are created (`overlays`, `backgrounds`, `combined_videos`, `done`, `input`, `output`).
 - [ ] Render screen renders.
 
 ## Each task (with sample data)
@@ -18,9 +18,6 @@ Run on a clean Windows 10 or 11 VM (no Node, no dev tools installed).
 - [ ] Tạo video từ ảnh runs (with a snow.mov in workspace).
 - [ ] Cắt video 30s runs and produces segments.
 - [ ] Cắt video background runs.
-- [ ] Tạo ảnh thu nhỏ runs.
-- [ ] Ghép video + thumbnail runs.
-- [ ] Sửa tên thu nhỏ runs.
 
 ## Queue + cancel
 - [ ] Submit two tasks; only one runs at a time.

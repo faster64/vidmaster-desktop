@@ -5,8 +5,8 @@ export async function renderCutBg(el) {
   const s = await window.api.settings.get();
   const defaults = { input: `${ws}\\backgrounds`, output: `${ws}\\backgrounds` };
   const fields = [
-    { type: "folder", path: "input",  label: "Folder background" },
-    { type: "folder", path: "output", label: "Folder output (có thể trùng)" },
+    { type: "folder", path: "input",  label: "Folder background",            required: true, mustExist: "folder" },
+    { type: "folder", path: "output", label: "Folder output (có thể trùng)", required: true },
   ];
   el.innerHTML = taskFormShell({
     icon: "🎞️", title: "Cắt video background",

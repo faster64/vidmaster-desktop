@@ -1,4 +1,22 @@
+import { toast } from "./toast.js";
+
 const root = () => document.getElementById("modal-root");
+
+function errorKeyword(err) {
+  return err?.code || err?.name || err?.message || String(err);
+}
+
+function safeBind(el, label, handler) {
+  if (!el) return;
+  el.addEventListener("click", async (e) => {
+    try {
+      await handler(e);
+    } catch (err) {
+      console.error(`[modal] ${label} handler failed:`, err);
+      toast({ kind: "error", message: `⚠️ Không thực hiện được "${label}": ${errorKeyword(err)}` });
+    }
+  });
+}
 
 export function showModal({ title, body, footer }) {
   const r = root();
@@ -10,11 +28,13 @@ export function showModal({ title, body, footer }) {
         <div class="modal-footer">${footer ?? `<button class="primary" data-close>Đóng</button>`}</div>
       </div>
     </div>`;
+  const close = () => { r.innerHTML = ""; };
   r.addEventListener("click", (e) => {
     if (e.target.matches(".modal-backdrop") || e.target.matches("[data-close]")) {
-      r.innerHTML = "";
+      close();
     }
-  }, { once: true });
+  });
+  return { close };
 }
 
 export async function showErrorModal({ summary, error, jobId }) {
@@ -31,13 +51,15 @@ export async function showErrorModal({ summary, error, jobId }) {
            ${logLines ? `<h4>Log gần nhất (${logs.length} dòng)</h4><pre>${escape(logLines)}</pre>` : ""}`,
     footer: `
       <button id="copy-log">Copy log</button>
-      <button onclick="window.api.shell.openLogFile()">Mở file log</button>
+      <button id="open-log-file">Mở file log</button>
       <button class="primary" data-close>Đóng</button>
     `,
   });
-  document.getElementById("copy-log")?.addEventListener("click", () => {
-    navigator.clipboard.writeText(stack + "\n\n" + logLines);
+  safeBind(document.getElementById("copy-log"), "Copy log", async () => {
+    await navigator.clipboard.writeText(stack + "\n\n" + logLines);
+    toast({ kind: "success", message: "✅ Đã copy log vào clipboard" });
   });
+  safeBind(document.getElementById("open-log-file"), "Mở file log", () => window.api.shell.openLogFile());
 }
 
 function escape(s) { return String(s).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }

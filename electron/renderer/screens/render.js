@@ -21,16 +21,16 @@ export async function renderRender(el) {
   const lastConfig = settings.lastConfig?.render;
 
   const fields = [
-    { type: "folder", path: "inputs.overlays",    label: "Folder overlays" },
-    { type: "folder", path: "inputs.backgrounds", label: "Folder backgrounds" },
-    { type: "folder", path: "output",             label: "Folder output" },
+    { type: "folder", path: "inputs.overlays",    label: "Folder overlays",     required: true, mustExist: "folder" },
+    { type: "folder", path: "inputs.backgrounds", label: "Folder backgrounds",  required: true, mustExist: "folder" },
+    { type: "folder", path: "output",             label: "Folder output",       required: true },
     { type: "number", path: "currentDay",         label: "Số ngày", min: 1 },
     { type: "number", path: "videosPerFolder",    label: "Số video / folder", min: 1 },
   ];
   const advanced = [
     { type: "checkbox", path: "ffmpeg.useGPU",      label: "Dùng GPU (NVIDIA/Intel/AMD)" },
     { type: "text",     path: "chromaKey.color",    label: "🎨 ChromaKey color (hex, vd #D4F9D7)" },
-    { type: "number",   path: "opacity",            label: "Opacity (0–1)", min: 0 },
+    { type: "number",   path: "opacity",            label: "Opacity (0–1)", min: 0, max: 1, step: "any" },
   ];
 
   el.innerHTML = taskFormShell({

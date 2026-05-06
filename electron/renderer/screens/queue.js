@@ -51,7 +51,7 @@ export async function renderQueue(el) {
   unsub = window.api.queue.onUpdate(render);
 }
 
-const LABELS = { render: "Render Video", snow: "Snow", trim: "Trim", cutBg: "Cut BG", thumb: "Thumb", concat: "Concat", rename: "Rename" };
+const LABELS = { render: "Render Video", snow: "Snow", trim: "Trim", cutBg: "Cut BG" };
 function labelFor(t) { return LABELS[t] || t; }
 function statusIcon(s) { return ({ done: "✅", error: "❌", cancelled: "🚫" })[s] || "•"; }
 function ago(ts) {

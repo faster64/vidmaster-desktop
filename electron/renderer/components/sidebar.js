@@ -4,9 +4,6 @@ const NAV_ITEMS = [
     { id: "snow",    icon: "❄️", label: "Tạo video từ ảnh" },
     { id: "trim",    icon: "✂️", label: "Cắt video 30s" },
     { id: "cutBg",   icon: "🎞️", label: "Cắt video background" },
-    { id: "thumb",   icon: "🖼️", label: "Tạo ảnh thu nhỏ" },
-    { id: "concat",  icon: "🔗", label: "Ghép video + thumbnail" },
-    { id: "rename",  icon: "✏️", label: "Sửa tên thu nhỏ" },
   ]},
   { group: "Hệ thống", items: [
     { id: "queue",    icon: "📋", label: "Hàng đợi" },
