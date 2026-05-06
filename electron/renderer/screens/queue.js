@@ -51,7 +51,11 @@ export async function renderQueue(el) {
   unsub = window.api.queue.onUpdate(render);
 }
 
-const LABELS = { render: "Render Video", snow: "Snow", trim: "Trim", cutBg: "Cut BG" };
+const LABELS = {
+  render: "Render Video", snow: "Snow", trim: "Trim", cutBg: "Cut BG",
+  getUrls: "Lấy link kênh", download: "Tải video", concat: "Nối video",
+  _ytdlpUpdate: "Cập nhật yt-dlp",
+};
 function labelFor(t) { return LABELS[t] || t; }
 function statusIcon(s) { return ({ done: "✅", error: "❌", cancelled: "🚫" })[s] || "•"; }
 function ago(ts) {
