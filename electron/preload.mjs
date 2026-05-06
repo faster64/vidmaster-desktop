@@ -32,6 +32,13 @@ contextBridge.exposeInMainWorld("api", {
   },
   fs: {
     exists: (p) => ipcRenderer.invoke("fs:exists", p),
+    listMp4: (folder) => ipcRenderer.invoke("fs:listMp4", folder),
+    readUrlsFile: (p) => ipcRenderer.invoke("fs:readUrlsFile", p),
+    readVideoInfos: (p) => ipcRenderer.invoke("fs:readVideoInfos", p),
+  },
+  ytdlp: {
+    getStatus: () => ipcRenderer.invoke("ytdlp:getStatus"),
+    update: () => ipcRenderer.invoke("ytdlp:update"),
   },
   log: {
     getRecent: (jobId) => ipcRenderer.invoke("log:getRecent", jobId),

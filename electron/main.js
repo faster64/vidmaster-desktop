@@ -9,7 +9,10 @@ import { registerDialogIpc } from "./ipc/dialog.js";
 import { registerShellIpc } from "./ipc/shell.js";
 import { registerAppIpc } from "./ipc/app.js";
 import { registerFsIpc } from "./ipc/fs.js";
+import { registerYtdlpIpc } from "./ipc/ytdlp.js";
 import { detectEncoder } from "./gpuDetect.js";
+import { existsSync } from "fs";
+import { updateBinary } from "../src/_lib/ytdlp.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -57,6 +60,17 @@ app.whenReady().then(async () => {
   registerShellIpc(() => log.transports.file.getFile().path);
   registerAppIpc(() => settings);
   registerFsIpc();
+  registerYtdlpIpc(() => settings, () => queue);
+
+  if (settings.get("download.autoUpdateYtDlp")) {
+    const ytdlpPath = settings.get("download.ytdlpPath");
+    if (existsSync(ytdlpPath)) {
+      updateBinary({ targetPath: ytdlpPath })
+        .then(() => log.info("yt-dlp.exe updated on startup"))
+        .catch((err) => log.warn("yt-dlp auto-update failed:", err.message));
+    }
+  }
+
   createWindow();
 });
 
