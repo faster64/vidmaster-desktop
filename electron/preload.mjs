@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld("api", {
   settings: {
     get: (key) => ipcRenderer.invoke("settings:get", key),
     set: (patch) => ipcRenderer.invoke("settings:set", patch),
+    resetAll: () => ipcRenderer.invoke("settings:resetAll"),
     onChange: (cb) => { subscribers["settings:change"].add(cb); return () => subscribers["settings:change"].delete(cb); },
   },
   dialog: {

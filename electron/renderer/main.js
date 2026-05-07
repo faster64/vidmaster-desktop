@@ -41,15 +41,16 @@ async function bootstrap() {
   const identifier = (await window.api.settings.get("tracking.identifier")) ?? "";
   if (!ws || !identifier) {
     contentEl.innerHTML = "";
-    await renderOnboarding(
-      contentEl,
-      { initialWorkspace: ws ?? "", initialIdentifier: identifier },
-      async ({ workspace, identifier }) => {
-        await window.api.settings.set({ workspace, "tracking.identifier": identifier });
-        await navigate("render");
-      },
-    );
-    return;
+    await new Promise((resolve) => {
+      renderOnboarding(
+        contentEl,
+        { initialWorkspace: ws ?? "", initialIdentifier: identifier },
+        async ({ workspace, identifier }) => {
+          await window.api.settings.set({ workspace, "tracking.identifier": identifier });
+          resolve();
+        },
+      );
+    });
   }
   mountSidebar(sidebarEl, navigate);
   mountQueueDock(dockEl);

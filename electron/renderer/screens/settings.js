@@ -112,7 +112,9 @@ export async function renderSettings(el) {
 
     <h3 style="margin-top:32px">About</h3>
     <p>Version: <strong>${version}</strong></p>
-    <button id="reset" class="danger">Reset tất cả về mặc định</button>
+    <button id="reset" class="danger">Reset settings về mặc định (giữ workspace + định danh)</button>
+    <button id="reset-all" class="danger" style="margin-left:8px">🗑 Xoá toàn bộ dữ liệu — làm lại từ đầu</button>
+    <div class="help" style="margin-top:6px">"Xoá toàn bộ" sẽ xoá settings + workspace + định danh + lastConfig. App sẽ reload và yêu cầu onboarding lại. Files trong folder workspace KHÔNG bị xoá.</div>
   `;
 
   el.querySelector("#ws-pick").addEventListener("click", async () => {
@@ -243,6 +245,18 @@ export async function renderSettings(el) {
       });
       renderSettings(el);
     }
+  });
+  el.querySelector("#reset-all").addEventListener("click", async () => {
+    const confirmed = confirm(
+      "Bạn chắc chắn muốn XOÁ TOÀN BỘ DỮ LIỆU?\n\n" +
+      "- Settings, workspace path, định danh, lastConfig sẽ bị xoá.\n" +
+      "- App sẽ reload và yêu cầu onboarding lại.\n" +
+      "- Files trong folder workspace KHÔNG bị xoá.\n\n" +
+      "Hành động này không thể hoàn tác."
+    );
+    if (!confirmed) return;
+    await window.api.settings.resetAll();
+    location.reload();
   });
 }
 

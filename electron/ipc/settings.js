@@ -10,6 +10,7 @@ export function registerSettingsIpc(getMainWindow) {
 
   ipcMain.handle("settings:get", (_, key) => settings.get(key));
   ipcMain.handle("settings:set", (_, patch) => settings.set(patch));
+  ipcMain.handle("settings:resetAll", () => { settings.resetAll(); return true; });
 
   return settings;
 }

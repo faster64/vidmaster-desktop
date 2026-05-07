@@ -99,5 +99,12 @@ export function createSettings() {
     return () => listeners.delete(cb);
   }
 
-  return { get, set, onChange };
+  function resetAll() {
+    store.clear();
+    migrate(store);
+    const snapshot = store.store;
+    listeners.forEach((cb) => cb(snapshot));
+  }
+
+  return { get, set, onChange, resetAll };
 }
