@@ -26,6 +26,7 @@ async function navigate(name) {
   const fn = screens[name];
   if (!fn) return;
   contentEl.innerHTML = "";
+  contentEl.dataset.screen = name;
   await fn(contentEl);
   document.querySelectorAll(".nav-item").forEach((el) => el.classList.toggle("active", el.dataset.screen === name));
   window.location.hash = name;

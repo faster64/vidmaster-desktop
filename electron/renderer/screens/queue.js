@@ -4,6 +4,7 @@ import { showErrorModal } from "../components/modal.js";
 export async function renderQueue(el) {
   let unsub;
   const render = async (state) => {
+    if (el.dataset.screen !== "queue") { unsub?.(); return; }
     el.innerHTML = `
       <div class="screen-header">📋 Hàng đợi</div>
       <p class="screen-subtitle">Mỗi lúc chỉ 1 task chạy. Có thể huỷ task đang chạy hoặc đang chờ.</p>
