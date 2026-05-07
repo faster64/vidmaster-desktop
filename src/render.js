@@ -58,9 +58,34 @@ const readChromaKeyColors = (chromaKeyFile, color, runner) => {
   return colors;
 };
 
-const calculateStartIndex = (folderIndex, day, videosPerFolder, totalVideos) => {
-  const offset = (day - 1) * videosPerFolder;
-  return (folderIndex * videosPerFolder + offset) % totalVideos;
+const HISTORY_FILE = "_rendered.json";
+
+const readHistory = (groupFolder) => {
+  const file = path.join(groupFolder, HISTORY_FILE);
+  if (!fs.existsSync(file)) return [];
+  try {
+    const data = JSON.parse(fs.readFileSync(file, "utf-8"));
+    return Array.isArray(data?.rendered) ? data.rendered : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeHistory = (groupFolder, renderedSet) => {
+  const file = path.join(groupFolder, HISTORY_FILE);
+  const data = { version: 1, rendered: [...renderedSet].sort() };
+  fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf-8");
+};
+
+const healHistoryFromDisk = (groupFolder, history) => {
+  const set = new Set(history);
+  if (!fs.existsSync(groupFolder)) return set;
+  for (const f of fs.readdirSync(groupFolder)) {
+    if (path.extname(f).toLowerCase() === ".mp4") {
+      set.add(path.basename(f, path.extname(f)));
+    }
+  }
+  return set;
 };
 
 // ================= filter builders =================
@@ -187,6 +212,7 @@ const processVideo = (inputOverlay, inputBackground, outputPath, cfg) => {
       }
 
       const duration = metadata.format.duration;
+      const overlayHasAudio = (metadata.streams || []).some((s) => s.codec_type === "audio");
 
       let filterConfig;
       if (useKeepColor) {
@@ -198,6 +224,13 @@ const processVideo = (inputOverlay, inputBackground, outputPath, cfg) => {
       } else {
         runner.log("info", `Using Chroma Key mode for ${path.basename(outputPath)}`);
         filterConfig = buildComplexFilter(inputOverlay, overlayFiles, chromaKeyColors, chromaColor, useChromaKey, height, y_offset);
+      }
+
+      // Overlay không có audio track → thay [1:a]volume=1.0 bằng anullsrc (silent audio)
+      if (!overlayHasAudio) {
+        runner.log("info", `Overlay không có audio, dùng silent audio cho ${path.basename(outputPath)}`);
+        filterConfig[filterConfig.length - 1] =
+          `anullsrc=channel_layout=stereo:sample_rate=${AUDIO_FREQ},atrim=duration=${duration},asetpts=PTS-STARTPTS[overlay_audio]`;
       }
 
       const command = ffmpeg(inputBackground)
@@ -264,7 +297,6 @@ export async function runRender(config) {
   runner.checkAborted();
 
   const {
-    currentDay,
     videosPerFolder,
     inputs,
     output: outputFolder,
@@ -299,21 +331,10 @@ export async function runRender(config) {
   const y_offset = crop.yOffset || 490;
 
   // workspace files
-  const currentDayFile = workspaceFiles.currentDay || null;
   const chromaKeyFile = workspaceFiles.chromaKey || null;
 
   const outputs = [];
   const errors = [];
-
-  // Persist currentDay if configured
-  if (currentDayFile) {
-    try {
-      fs.writeFileSync(currentDayFile, currentDay.toString(), { encoding: "utf-8" });
-      runner.log("info", `Saved currentDay (${currentDay}) to file: ${currentDayFile}`);
-    } catch (error) {
-      runner.log("error", `Error writing currentDay to file: ${error.message}`);
-    }
-  }
 
   // Validate overlay folder exists
   if (!fs.existsSync(overlayFolder)) {
@@ -350,13 +371,50 @@ export async function runRender(config) {
   }
 
   // 4. Overview log
-  runner.log("info", `Starting processing with ${totalOverlays} overlay videos and ${totalVideoBackgrounds} background folders`);
-  runner.log("info", `Current day: ${currentDay}, Videos per folder: ${videosPerFolder}`);
+  runner.log("info", `Starting with ${totalOverlays} overlay videos and ${totalVideoBackgrounds} background folders. Videos / folder: ${videosPerFolder}.`);
 
-  // 5. Total videos to process
+  // 5. Build per-folder state: read history (heal from disk), compute available overlays
+  const overlayBaseByName = new Map(
+    overlayFiles.map((p) => [path.basename(p, path.extname(p)), p])
+  );
+
+  const folderState = backgroundFolderNames.map((folderName) => {
+    const groupFolder = path.join(outputFolder, folderName);
+    if (!fs.existsSync(groupFolder)) fs.mkdirSync(groupFolder, { recursive: true });
+    const histSet = healHistoryFromDisk(groupFolder, readHistory(groupFolder));
+    const available = [...overlayBaseByName.keys()].filter((b) => !histSet.has(b));
+    return { folderName, groupFolder, histSet, available };
+  });
+
+  // 6. Pre-flight: every folder must have enough unrendered overlays
+  const exhausted = folderState.filter((s) => s.available.length < videosPerFolder);
+  if (exhausted.length > 0) {
+    const detail = exhausted
+      .map((s) => `${s.folderName} (còn ${s.available.length}/${videosPerFolder})`)
+      .join(", ");
+    throw new Error(`Folder đã render hết overlay khả dụng: ${detail}. Thêm overlay mới hoặc xoá _rendered.json để render lại.`);
+  }
+
+  // 7. Pick algorithm: round-robin across folders, preferring overlays not yet picked this run
+  const usedThisRun = new Set();
+  const picksByFolder = folderState.map(() => []);
+  for (let slot = 0; slot < videosPerFolder; slot++) {
+    for (let i = 0; i < folderState.length; i++) {
+      const fs_ = folderState[i];
+      const taken = picksByFolder[i];
+      let chosen = fs_.available.find((b) => !usedThisRun.has(b) && !taken.includes(b));
+      if (!chosen) chosen = fs_.available.find((b) => !taken.includes(b));
+      if (!chosen) {
+        throw new Error(`Folder ${fs_.folderName} hết overlay khả dụng ở slot ${slot + 1}`);
+      }
+      taken.push(chosen);
+      usedThisRun.add(chosen);
+    }
+  }
+
+  // 8. Total videos to process
   const totalVideosToProcess = totalVideoBackgrounds * videosPerFolder;
-  runner.log("info", `Total videos to process: ${totalVideosToProcess}`);
-  runner.log("info", `Max concurrent processes: ${maxConcurrentProcesses}`);
+  runner.log("info", `Total videos to process: ${totalVideosToProcess} (max concurrent: ${maxConcurrentProcesses})`);
 
   let processedVideos = 0;
   let errorVideos = 0;
@@ -379,24 +437,19 @@ export async function runRender(config) {
     runner,
   };
 
-  // 6. Process each background folder (use actual folder names, not 1..N indices)
-  for (let i = 0; i < totalVideoBackgrounds; i++) {
+  // 9. Process each folder
+  for (let i = 0; i < folderState.length; i++) {
     runner.checkAborted();
 
-    const folderName = backgroundFolderNames[i];
-    const groupFolder = path.join(outputFolder, folderName);
+    const { folderName, groupFolder, histSet } = folderState[i];
+    const folderPicks = picksByFolder[i];
 
-    if (!fs.existsSync(groupFolder)) {
-      fs.mkdirSync(groupFolder, { recursive: true });
-    }
-
-    // 7. Get background file list
+    // Background files for this folder
     const backgroundsFolderPath = path.join(backgroundFolder, folderName);
     const backgroundFiles = getFilesFromFolder(backgroundsFolderPath);
     const totalBackgroundsForFolder = backgroundFiles.length;
-    runner.log("info", `Using ${totalBackgroundsForFolder} videos from backgrounds/${folderName}`);
+    runner.log("info", `Folder ${folderName} (${i + 1}/${totalVideoBackgrounds}): ${totalBackgroundsForFolder} background videos, picks=${folderPicks.join(", ")}`);
 
-    // 8. Check background file count
     if (totalBackgroundsForFolder === 0) {
       runner.log("error", `No background files for folder ${folderName}`);
       processedVideos += videosPerFolder;
@@ -406,70 +459,47 @@ export async function runRender(config) {
       continue;
     }
 
-    runner.log("info", `Processing folder ${folderName} (${i + 1}/${totalVideoBackgrounds})`);
+    const tasks = folderPicks.map((overlayBase) => {
+      const overlay = overlayBaseByName.get(overlayBase);
+      const background = backgroundFiles[Math.floor(Math.random() * totalBackgroundsForFolder)];
+      const outputPath = path.join(groupFolder, `${overlayBase}.mp4`);
+      return { overlay, background, outputPath, overlayBase };
+    });
 
-    // 9. Calculate start index for current day
-    const startIndex = calculateStartIndex(i, currentDay, videosPerFolder, totalOverlays);
-
-    // 10. Prepare task list
-    const tasks = [];
-
-    // 11. Gather videos from start position
-    for (let j = 0; j < videosPerFolder; j++) {
-      const overlayIndex = (startIndex + j) % totalOverlays;
-      const backgroundIndex = Math.floor(Math.random() * totalBackgroundsForFolder);
-
-      const overlay = overlayFiles[overlayIndex];
-      const background = backgroundFiles[backgroundIndex];
-
-      const overlayFileName = path.basename(overlay, path.extname(overlay));
-      const outputPath = path.join(groupFolder, `${overlayFileName}.mp4`);
-
-      if (fs.existsSync(outputPath)) {
-        runner.log("info", `Video already exists, skipping: ${path.basename(outputPath)}`);
-        processedVideos++;
-        runner.setProgress(Math.round((processedVideos / totalVideosToProcess) * 100), "");
-        continue;
-      }
-
-      runner.log("info", `Preparing video ${j + 1}/${videosPerFolder}: ${path.basename(overlay)}`);
-
-      tasks.push({ overlay, background, outputPath });
-    }
-
-    // 12. Process in parallel batches
-    const processBatch = async (batch) => {
-      return Promise.all(
-        batch.map((task) =>
-          processVideo(task.overlay, task.background, task.outputPath, videoCfg)
-            .then((outPath) => {
-              processedVideos++;
-              runner.setProgress(Math.round((processedVideos / totalVideosToProcess) * 100), "");
-              outputs.push(outPath);
-            })
-            .catch((error) => {
-              runner.log("error", `Error processing video: ${error.message}`);
-              processedVideos++;
-              errorVideos++;
-              runner.setProgress(Math.round((processedVideos / totalVideosToProcess) * 100), "");
-              errors.push({ file: task.outputPath, message: error.message });
-            })
-        )
-      );
-    };
-
-    // 13. Split into batches
+    // Process in parallel batches; on success add to histSet
     for (let k = 0; k < tasks.length; k += maxConcurrentProcesses) {
       runner.checkAborted();
       const batch = tasks.slice(k, k + maxConcurrentProcesses);
-      await processBatch(batch);
+      await Promise.all(batch.map((task) =>
+        processVideo(task.overlay, task.background, task.outputPath, videoCfg)
+          .then((outPath) => {
+            processedVideos++;
+            runner.setProgress(Math.round((processedVideos / totalVideosToProcess) * 100), "");
+            outputs.push(outPath);
+            histSet.add(task.overlayBase);
+          })
+          .catch((error) => {
+            runner.log("error", `Error processing video: ${error.message}`);
+            processedVideos++;
+            errorVideos++;
+            runner.setProgress(Math.round((processedVideos / totalVideosToProcess) * 100), "");
+            errors.push({ file: task.outputPath, message: error.message });
+          })
+      ));
+    }
+
+    // Persist history for this folder (after all picks attempted)
+    try {
+      writeHistory(groupFolder, histSet);
+    } catch (err) {
+      runner.log("error", `Failed to write history for ${folderName}: ${err.message}`);
     }
   }
 
-  // 14. Final summary
+  // 10. Final summary
   const endTime = Date.now();
   const totalTime = ((endTime - startTime) / 1000 / 60).toFixed(2);
-  runner.log("info", `Done! Total time: ${totalTime} minutes`);
+  runner.log("info", `Done! Total time: ${totalTime} minutes — ${processedVideos - errorVideos}/${totalVideosToProcess} ok, ${errorVideos} errors`);
   runner.setProgress(100, "Render done");
 
   return { ok: errors.length === 0, outputs, errors };

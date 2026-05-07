@@ -9,8 +9,8 @@ export async function renderCutBg(el) {
     { type: "folder", path: "output", label: "Folder output (có thể trùng)", required: true },
   ];
   el.innerHTML = taskFormShell({
-    icon: "🎞️", title: "Cắt video background",
-    description: "Cắt video background dài thành các segment.",
+    icon: "🎞️", title: "Chia nhỏ video nền",
+    description: "Chia nhỏ video nền dài thành các segment.",
     fields, advanced: [], taskType: "cutBg", lastConfig: s.lastConfig?.cutBg, defaults,
   });
   bindTaskForm(el.querySelector("#task-form"), { fields, taskType: "cutBg", defaults });

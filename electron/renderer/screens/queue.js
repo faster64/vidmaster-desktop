@@ -1,6 +1,8 @@
 import { progressBar } from "../components/progressBar.js";
 import { showErrorModal } from "../components/modal.js";
 
+const MAX_LOG_LINES = 200;
+
 export async function renderQueue(el) {
   let unsub;
   const render = async (state) => {
@@ -14,7 +16,8 @@ export async function renderQueue(el) {
           <span class="label">${labelFor(state.running.type)} <span style="color:var(--muted)">${state.running.message ?? ""}</span></span>
           ${progressBar(state.running.progress)}
           <button data-cancel="${state.running.id}" class="danger">✕ Huỷ</button>
-        </div>` : `<p style="color:var(--muted)">Không có task nào đang chạy.</p>`}
+        </div>
+        ${logPanelHtml(state.running.logs)}` : `<p style="color:var(--muted)">Không có task nào đang chạy.</p>`}
       <h3>⏸ Đang chờ (${state.pending.length})</h3>
       ${state.pending.map((j) => `
         <div class="queue-item">
@@ -31,21 +34,27 @@ export async function renderQueue(el) {
     `;
 
     el.querySelector("#queue-clear")?.addEventListener("click", () => window.api.queue.clear());
+    const logBody = el.querySelector(".log-body");
+    if (logBody) logBody.scrollTop = logBody.scrollHeight;
   };
 
-  el.addEventListener("click", (e) => {
-    const id = e.target.dataset?.cancel;
-    if (id) window.api.queue.cancel(id);
-    const folder = e.target.dataset?.open;
-    if (folder) window.api.shell.openFolder(folder);
-    const errId = e.target.dataset?.error;
-    if (errId) {
-      window.api.queue.getState().then((s) => {
-        const job = s.completed.find((j) => j.id === errId);
-        if (job?.error) showErrorModal({ summary: `Task ${labelFor(job.type)} thất bại`, error: job.error, jobId: job.id });
-      });
-    }
-  });
+  if (!el._queueClickAttached) {
+    el.addEventListener("click", (e) => {
+      if (el.dataset.screen !== "queue") return;
+      const id = e.target.dataset?.cancel;
+      if (id) window.api.queue.cancel(id);
+      const folder = e.target.dataset?.open;
+      if (folder) window.api.shell.openFolder(folder);
+      const errId = e.target.dataset?.error;
+      if (errId) {
+        window.api.queue.getState().then((s) => {
+          const job = s.completed.find((j) => j.id === errId);
+          if (job?.error) showErrorModal({ summary: `Task ${labelFor(job.type)} thất bại`, error: job.error, jobId: job.id });
+        });
+      }
+    });
+    el._queueClickAttached = true;
+  }
 
   const initial = await window.api.queue.getState();
   await render(initial);
@@ -69,3 +78,21 @@ function parentDir(filePath) {
   return filePath.replace(/[/\\][^/\\]+$/, "");
 }
 function escapeAttr(s) { return String(s).replace(/"/g, "&quot;"); }
+function escapeHtml(s) { return String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
+
+function logPanelHtml(logs) {
+  if (!logs || logs.length === 0) return "";
+  const lines = logs.slice(-MAX_LOG_LINES);
+  return `
+    <div class="log-panel">
+      <div class="log-panel-header"><strong>📜 Log</strong></div>
+      <div class="log-body">${lines.map((l) => `<div class="log-line log-${l.level}"><span class="log-time">${fmtTime(l.ts)}</span>${escapeHtml(l.line)}</div>`).join("")}</div>
+    </div>`;
+}
+
+function fmtTime(ts) {
+  if (!ts) return "        ";
+  const d = new Date(ts);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}

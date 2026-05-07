@@ -6,13 +6,7 @@ export const REQUIRED_SUBFOLDERS = [
   "input", "output",
 ];
 
-const CHROMA_KEY_TEMPLATE = `# ChromaKey colors — mỗi dòng 1 mã hex 6 ký tự (không có dấu #)
-# Dòng N áp cho overlay thứ N (theo thứ tự sort tên file overlay)
-# Dòng bắt đầu bằng # hoặc dòng trống đều bị bỏ qua
-# Ví dụ:
-# D4F9D7
-# FBFF02
-`;
+const CHROMA_KEY_TEMPLATE = ``;
 
 export function ensureWorkspace(root) {
   fs.mkdirSync(root, { recursive: true });

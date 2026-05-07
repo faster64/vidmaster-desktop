@@ -13,6 +13,7 @@ import { registerYtdlpIpc } from "./ipc/ytdlp.js";
 import { detectEncoder } from "./gpuDetect.js";
 import { existsSync } from "fs";
 import { updateBinary } from "../src/_lib/ytdlp.js";
+import { ensureWorkspace } from "./workspace.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -61,6 +62,15 @@ app.whenReady().then(async () => {
   registerAppIpc(() => settings);
   registerFsIpc();
   registerYtdlpIpc(() => settings, () => queue);
+
+  const ws = settings.get("workspace");
+  if (ws && existsSync(ws)) {
+    try {
+      ensureWorkspace(ws);
+    } catch (err) {
+      log.warn(`ensureWorkspace failed on startup: ${err.message}`);
+    }
+  }
 
   if (settings.get("download.autoUpdateYtDlp")) {
     const ytdlpPath = settings.get("download.ytdlpPath");

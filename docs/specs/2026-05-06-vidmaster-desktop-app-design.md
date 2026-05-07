@@ -121,7 +121,7 @@ async function runX({ /* per-task config */, signal, onProgress, onLog }) {
   - 🎬 Render Video
   - ❄️ Tạo video từ ảnh
   - ✂️ Cắt video 30s
-  - 🎞️ Cắt video background
+  - 🎞️ Chia nhỏ video nền
   - 🖼️ Tạo ảnh thu nhỏ
   - 🔗 Ghép video + thumbnail
   - ✏️ Sửa tên thu nhỏ

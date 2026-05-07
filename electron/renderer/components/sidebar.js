@@ -3,7 +3,7 @@ const NAV_ITEMS = [
     { id: "render",   icon: "🎬", label: "Render Video" },
     { id: "snow",     icon: "❄️", label: "Tạo video từ ảnh" },
     { id: "trim",     icon: "✂️", label: "Cắt video 30s" },
-    { id: "cutBg",    icon: "🎞️", label: "Cắt video background" },
+    { id: "cutBg",    icon: "🎞️", label: "Chia nhỏ video nền" },
     { id: "getUrls",  icon: "🔗", label: "Lấy link kênh" },
     { id: "download", icon: "⬇️", label: "Tải video" },
     { id: "concat",   icon: "🪡", label: "Nối video" },
@@ -23,11 +23,19 @@ export function mountSidebar(el, onNavigate) {
           <span class="icon">${it.icon}</span>${it.label}
           ${it.id === "queue" ? `<span class="badge" id="queue-badge" style="display:none">0</span>` : ""}
         </div>`).join("")}
-    `).join("");
+    `).join("") +
+    `<div class="sidebar-footer">
+       <button id="open-workspace" class="sidebar-action" title="Mở folder workspace">📂 Mở workspace</button>
+     </div>`;
 
   el.addEventListener("click", (e) => {
     const item = e.target.closest(".nav-item");
     if (item) onNavigate(item.dataset.screen);
+  });
+
+  el.querySelector("#open-workspace")?.addEventListener("click", async () => {
+    const ws = await window.api.app.getWorkspace();
+    if (ws) await window.api.shell.openFolder(ws);
   });
 
   window.api.queue.onUpdate((s) => {
