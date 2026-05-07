@@ -30,11 +30,11 @@ export class TaskRunner {
     throwIfAborted(this.signal);
   }
 
-  spawnFfmpeg(args, { totalDurationSec, stageWeight = 1, stageOffset = 0 } = {}) {
+  spawnFfmpeg(args, { totalDurationSec, stageWeight = 1, stageOffset = 0, message = "" } = {}) {
     return spawnFfmpeg(args, {
       signal: this.signal,
       totalDurationSec,
-      onProgress: (pct) => this.setProgress(stageOffset + pct * stageWeight, ""),
+      onProgress: (pct) => this.setProgress(stageOffset + pct * stageWeight, message),
       onLogLine: (line) => this.onLog?.("debug", line),
     });
   }

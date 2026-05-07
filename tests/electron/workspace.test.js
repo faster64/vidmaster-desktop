@@ -31,8 +31,8 @@ describe("defaultsForTask", () => {
     expect(d.output).toBe(path.join(tmpDir, "done"));
   });
 
-  it("returns trim defaults with empty input and done as output", () => {
-    const d = defaultsForTask(tmpDir, "trim");
+  it("returns trimEnds defaults with empty input and done as output", () => {
+    const d = defaultsForTask(tmpDir, "trimEnds");
     expect(d.input).toBe("");
     expect(d.output).toBe(path.join(tmpDir, "done"));
   });

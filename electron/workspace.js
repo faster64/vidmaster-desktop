@@ -26,10 +26,6 @@ export function defaultsForTask(ws, type) {
         inputs: { overlays: p("overlays"), backgrounds: p("backgrounds") },
         output: p("done"),
       };
-    case "snow":
-      return { input: "", output: p("done"), snowAsset: "" };
-    case "trim":
-      return { input: "", output: p("done") };
     case "trimEnds":
       return { input: "", output: p("done") };
     case "cutBg":

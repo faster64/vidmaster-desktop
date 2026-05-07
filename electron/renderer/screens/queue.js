@@ -71,8 +71,8 @@ export async function renderQueue(el) {
 }
 
 const LABELS = {
-  render: "Render Video", snow: "Snow", trim: "Trim", trimEnds: "Cắt đầu/cuối", cutBg: "Cut BG",
-  getUrls: "Lấy link kênh", download: "Tải video", concat: "Nối video",
+  render: "Render Video", trimEnds: "Cắt đầu/cuối", cutBg: "Chia nhỏ video nền",
+  getUrls: "Lấy link kênh", download: "Tải video", concatHeadTail: "Nối đầu/cuối",
   _ytdlpUpdate: "Cập nhật yt-dlp",
 };
 function labelFor(t) { return LABELS[t] || t; }

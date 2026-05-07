@@ -1,13 +1,11 @@
 const NAV_ITEMS = [
   { group: "Tasks", items: [
     { id: "render",   icon: "🎬", label: "Render Video" },
-    { id: "snow",     icon: "❄️", label: "Tạo video từ ảnh" },
-    { id: "trim",     icon: "✂️", label: "Cắt video 30s" },
-    { id: "trimEnds", icon: "⏱️", label: "Cắt đầu/cuối" },
     { id: "cutBg",    icon: "🎞️", label: "Chia nhỏ video nền" },
+    { id: "trimEnds", icon: "😘", label: "Cắt đầu/cuối" },
+    { id: "concatHeadTail", icon: "😍", label: "Nối đầu/cuối" },
     { id: "getUrls",  icon: "🔗", label: "Lấy link kênh" },
     { id: "download", icon: "⬇️", label: "Tải video" },
-    { id: "concat",   icon: "🪡", label: "Nối video" },
   ]},
   { group: "Hệ thống", items: [
     { id: "queue",    icon: "📋", label: "Hàng đợi" },

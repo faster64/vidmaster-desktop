@@ -15,9 +15,9 @@ Run on a clean Windows 10 or 11 VM (no Node, no dev tools installed).
 
 ## Each task (with sample data)
 - [ ] Render Video runs end-to-end on a small overlay+background set.
-- [ ] Tạo video từ ảnh runs (with a snow.mov in workspace).
-- [ ] Cắt video 30s runs and produces segments.
+- [ ] Cắt đầu/cuối runs and produces trimmed videos.
 - [ ] Chia nhỏ video nền runs.
+- [ ] Lấy link kênh / Tải video / Nối đầu/cuối run end-to-end.
 
 ## Queue + cancel
 - [ ] Submit two tasks; only one runs at a time.

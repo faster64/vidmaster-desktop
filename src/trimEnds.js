@@ -26,10 +26,15 @@ export async function runTrimEnds(config) {
   const outputs = [];
   const errors = [];
 
-  for (let i = 0; i < files.length; i++) {
+  const total = files.length;
+  for (let i = 0; i < total; i++) {
     runner.checkAborted();
     const file = files[i];
     const fullPath = path.join(input, file);
+    const stageOffset = (i / total) * 100;
+    const stageWeight = 1 / total;
+    const message = `${i + 1}/${total} ${file}`;
+    runner.setProgress(stageOffset, message);
     try {
       const duration = await probeDuration(fullPath);
       const newDuration = duration - trimStart - trimEnd;
@@ -38,7 +43,7 @@ export async function runTrimEnds(config) {
       }
       const outName = `${path.parse(file).name}_trimmed.mp4`;
       const outPath = path.join(output, outName);
-      runner.log("info", `${file}: ${duration.toFixed(1)}s → ${newDuration.toFixed(1)}s (cắt đầu ${trimStart}s, cuối ${trimEnd}s)`);
+      runner.log("info", `${message}: ${duration.toFixed(1)}s → ${newDuration.toFixed(1)}s (cắt đầu ${trimStart}s, cuối ${trimEnd}s)`);
 
       await runner.spawnFfmpeg(
         [
@@ -51,7 +56,7 @@ export async function runTrimEnds(config) {
           "-movflags", "+faststart",
           outPath,
         ],
-        { totalDurationSec: newDuration }
+        { totalDurationSec: newDuration, stageOffset, stageWeight, message }
       );
 
       runner.log("info", `Saved: ${outName}`);
@@ -66,7 +71,7 @@ export async function runTrimEnds(config) {
       errors.push({ file, message: err.message, stack: err.stack });
       runner.log("error", `Trim ${file} failed: ${err.message}`);
     }
-    runner.setProgress(((i + 1) / files.length) * 100, `Trim ${file}`);
+    runner.setProgress(((i + 1) / total) * 100, message);
   }
 
   runner.setProgress(100, "Done");
