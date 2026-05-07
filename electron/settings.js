@@ -2,7 +2,7 @@ import { app } from "electron";
 import path from "path";
 import Store from "electron-store";
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 const DEFAULT_API_KEY = "AIzaSyDZTsPGvG0u5du3t7YGueGgnNi7IiulMus";
 const DEFAULT_TELEGRAM = {
   token: "8001545106:AAGRfvKJx1Rq1WFENtjAbXe9eCOSEINVdK0",
@@ -38,7 +38,8 @@ function buildDefaults() {
     },
     telegram: { ...DEFAULT_TELEGRAM },
     tracking: { identifier: "" },
-    ui: { theme: "light", logLevel: "info", completedHistorySize: 50 },
+    avatar: { size: 80, margin: 16, lastPosition: "bottom-right" },
+    ui: { theme: "light", logLevel: "info", completedHistorySize: 50, lastSettingsTab: "workspace" },
     lastUsedTask: "render",
     lastConfig: {},
   };
@@ -70,6 +71,14 @@ function migrate(store) {
     store.set("tracking", {
       identifier: store.get("tracking.identifier") ?? "",
     });
+  }
+  if (v < 5) {
+    store.set("avatar", {
+      size: store.get("avatar.size") ?? 80,
+      margin: store.get("avatar.margin") ?? 16,
+      lastPosition: store.get("avatar.lastPosition") ?? "bottom-right",
+    });
+    store.set("ui.lastSettingsTab", store.get("ui.lastSettingsTab") ?? "workspace");
   }
   store.set("version", SCHEMA_VERSION);
 }

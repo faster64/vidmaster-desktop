@@ -6,4 +6,5 @@ dist/
 .idea/
 tests/fixtures/*.mp4
 tests/fixtures/*.png
+tests/fixtures/*.jpg
 !tests/fixtures/README.md

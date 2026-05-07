@@ -38,7 +38,7 @@ describe("settings store", () => {
     s.set({ workspace: "D:\\Test" });
     const all = s.get();
     expect(all.workspace).toBe("D:\\Test");
-    expect(all.version).toBe(4);
+    expect(all.version).toBe(5);
   });
 
   it("notifies onChange subscribers", () => {
@@ -54,7 +54,7 @@ describe("settings store", () => {
     s.set({ workspace: "D:\\Test", version: 1 });
     // Re-create to trigger migration
     const s2 = createSettings();
-    expect(s2.get("version")).toBe(4);
+    expect(s2.get("version")).toBe(5);
     expect(s2.get("youtube.apiKey")).toBe("AIzaSyDZTsPGvG0u5du3t7YGueGgnNi7IiulMus");
     expect(s2.get("youtube.minDurationMinutes")).toBe(8);
     expect(s2.get("youtube.sortOrder")).toBe("VIEW");
@@ -70,9 +70,28 @@ describe("settings store", () => {
 
   it("returns defaults for new install (no migration needed)", () => {
     const s = createSettings();
-    expect(s.get("version")).toBe(4);
+    expect(s.get("version")).toBe(5);
     expect(s.get("youtube.minDurationMinutes")).toBe(8);
     expect(s.get("telegram.token")).toMatch(/^\d+:/);
     expect(s.get("tracking.identifier")).toBe("");
+  });
+
+  it("migrates v4 store to v5 with default avatar/lastSettingsTab keys", () => {
+    const s = createSettings();
+    s.set({ workspace: "D:\\Test", version: 4 });
+    const s2 = createSettings();
+    expect(s2.get("version")).toBe(5);
+    expect(s2.get("avatar.size")).toBe(80);
+    expect(s2.get("avatar.margin")).toBe(16);
+    expect(s2.get("avatar.lastPosition")).toBe("bottom-right");
+    expect(s2.get("ui.lastSettingsTab")).toBe("workspace");
+    expect(s2.get("workspace")).toBe("D:\\Test");
+  });
+
+  it("returns avatar defaults on a fresh install", () => {
+    const s = createSettings();
+    expect(s.get("avatar.size")).toBe(80);
+    expect(s.get("avatar.lastPosition")).toBe("bottom-right");
+    expect(s.get("ui.lastSettingsTab")).toBe("workspace");
   });
 });

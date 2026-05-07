@@ -7,6 +7,7 @@ import { runCutBg } from "../../src/cutBg.js";
 import { runGetUrls } from "../../src/getUrls.js";
 import { runDownload } from "../../src/download.js";
 import { runConcatHeadTail } from "../../src/concatHeadTail.js";
+import { runThumbAvatar } from "../../src/thumbAvatar.js";
 import { runYtdlpUpdate } from "./ytdlp.js";
 import { sendTelegram, workspaceName, escapeHtml, fmtTime, fmtDurationMin } from "../telegram.js";
 
@@ -14,6 +15,7 @@ export function registerQueueIpc(getMainWindow, getSettings) {
   const runners = {
     render: runRender, trimEnds: runTrimEnds, cutBg: runCutBg,
     getUrls: runGetUrls, download: runDownload, concatHeadTail: runConcatHeadTail,
+    thumbAvatar: runThumbAvatar,
     _ytdlpUpdate: runYtdlpUpdate,
   };
 

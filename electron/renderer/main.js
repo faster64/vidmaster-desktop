@@ -6,6 +6,7 @@ import { renderCutBg } from "./screens/cutBg.js";
 import { renderGetUrls } from "./screens/getUrls.js";
 import { renderDownload } from "./screens/download.js";
 import { renderConcatHeadTail } from "./screens/concatHeadTail.js";
+import { renderThumbAvatar } from "./screens/thumbAvatar.js";
 import { renderQueue } from "./screens/queue.js";
 import { renderSettings } from "./screens/settings.js";
 import { renderOnboarding } from "./screens/onboarding.js";
@@ -14,6 +15,7 @@ import { toast } from "./components/toast.js";
 const screens = {
   render: renderRender, trimEnds: renderTrimEnds, cutBg: renderCutBg,
   getUrls: renderGetUrls, download: renderDownload, concatHeadTail: renderConcatHeadTail,
+  thumbAvatar: renderThumbAvatar,
   queue: renderQueue, settings: renderSettings,
 };
 
@@ -78,5 +80,6 @@ window.api.queue.onUpdate((state) => {
 const TASK_LABELS = {
   render: "Render Video", trimEnds: "Cắt đầu/cuối", cutBg: "Chia nhỏ video nền",
   getUrls: "Lấy link kênh", download: "Tải video", concatHeadTail: "Nối đầu/cuối",
+  thumbAvatar: "Gắn avatar",
 };
 function labelOf(t) { return TASK_LABELS[t] || t; }
