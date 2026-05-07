@@ -10,7 +10,7 @@ Run on a clean Windows 10 or 11 VM (no Node, no dev tools installed).
 ## First launch
 - [ ] App launches from shortcut.
 - [ ] Onboarding asks for workspace folder.
-- [ ] After choosing folder, all 6 subfolders are created (`overlays`, `backgrounds`, `combined_videos`, `done`, `input`, `output`).
+- [ ] After choosing folder, all 5 subfolders are created (`overlays`, `backgrounds`, `done`, `input`, `output`).
 - [ ] Render screen renders.
 
 ## Each task (with sample data)

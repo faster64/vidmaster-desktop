@@ -147,7 +147,7 @@ async function runX({ /* per-task config */, signal, onProgress, onLog }) {
 │  🔢 Số ngày             [  1  ]          │
 │  🔢 Số video / folder   [  5  ]          │
 │                                          │
-│  ▾ Tuỳ chọn nâng cao                     │
+│  Tuỳ chọn nâng cao                     │
 │   ☑ Dùng GPU (NVIDIA)                   │
 │   🎨 ChromaKey color  [#D4F9D7] [▢]     │
 │   ⏲️ Opacity  [────●────] 70%           │

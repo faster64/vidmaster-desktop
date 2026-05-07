@@ -10,7 +10,7 @@ export function taskFormShell({ icon, title, description, fields, advanced, task
       ${fields.map((f) => fieldHtml(f, lastConfig, defaults)).join("")}
       ${advanced && advanced.length ? `
         <details class="advanced">
-          <summary>▾ Tuỳ chọn nâng cao</summary>
+          <summary>Tuỳ chọn nâng cao</summary>
           ${advanced.map((f) => fieldHtml(f, lastConfig, defaults)).join("")}
         </details>` : ""}
       <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
@@ -27,7 +27,20 @@ function fieldHtml(f, lastConfig, defaults) {
         <label>📁 ${f.label}</label>
         <div class="field-row">
           <input type="text" name="${f.path}" value="${escape(v)}">
-          <button type="button" data-pick="${f.path}">📂 Chọn…</button>
+          <button type="button" data-pick="${f.path}" data-pick-kind="folder">📂 Chọn…</button>
+          <button type="button" data-open="${f.path}" title="Mở folder">↗</button>
+        </div>
+        ${f.help ? `<div class="help">${f.help}</div>` : ""}
+      </div>`;
+  }
+  if (f.type === "file") {
+    const filtersAttr = f.filters ? ` data-pick-filters="${escape(JSON.stringify(f.filters))}"` : "";
+    return `
+      <div class="field" data-path="${f.path}" data-kind="file">
+        <label>📄 ${f.label}</label>
+        <div class="field-row">
+          <input type="text" name="${f.path}" value="${escape(v)}">
+          <button type="button" data-pick="${f.path}" data-pick-kind="file"${filtersAttr}>📂 Chọn…</button>
         </div>
         ${f.help ? `<div class="help">${f.help}</div>` : ""}
       </div>`;
@@ -55,6 +68,17 @@ function fieldHtml(f, lastConfig, defaults) {
         ${f.help ? `<div class="help">${f.help}</div>` : ""}
       </div>`;
   }
+  if (f.type === "select") {
+    const options = (f.options || []).map((o) =>
+      `<option value="${escape(o.value)}" ${String(v) === String(o.value) ? "selected" : ""}>${escape(o.label)}</option>`
+    ).join("");
+    return `
+      <div class="field" data-path="${f.path}" data-kind="select">
+        <label>${f.label}</label>
+        <select name="${f.path}">${options}</select>
+        ${f.help ? `<div class="help">${f.help}</div>` : ""}
+      </div>`;
+  }
   return "";
 }
 
@@ -77,12 +101,24 @@ function setValue(p, obj, value) {
 
 export function bindTaskForm(formEl, { fields, taskType, defaults }) {
   formEl.addEventListener("click", async (e) => {
-    const pickPath = e.target.dataset?.pick;
-    if (pickPath) {
-      const current = formEl.querySelector(`[name="${pickPath}"]`).value;
-      const chosen = await window.api.dialog.pickFolder(current);
-      if (chosen) formEl.querySelector(`[name="${pickPath}"]`).value = chosen;
+    const openPath = e.target.dataset?.open;
+    if (openPath) {
+      const value = formEl.querySelector(`[name="${openPath}"]`)?.value?.trim();
+      if (value) await window.api.shell.openFolder(value);
+      return;
     }
+    const pickPath = e.target.dataset?.pick;
+    if (!pickPath) return;
+    const kind = e.target.dataset?.pickKind || "folder";
+    const input = formEl.querySelector(`[name="${pickPath}"]`);
+    let chosen;
+    if (kind === "file") {
+      const filters = e.target.dataset?.pickFilters ? JSON.parse(e.target.dataset.pickFilters) : [];
+      chosen = await window.api.dialog.pickFile({ filters });
+    } else {
+      chosen = await window.api.dialog.pickFolder(input.value);
+    }
+    if (chosen) input.value = chosen;
   });
 
   formEl.querySelector("#task-reset")?.addEventListener("click", () => {
@@ -104,7 +140,7 @@ export function bindTaskForm(formEl, { fields, taskType, defaults }) {
     if (!formEl.reportValidity()) return;
 
     const config = {};
-    for (const input of formEl.querySelectorAll("input")) {
+    for (const input of formEl.querySelectorAll("input, select")) {
       const name = input.name;
       if (!name) continue;
       let v;

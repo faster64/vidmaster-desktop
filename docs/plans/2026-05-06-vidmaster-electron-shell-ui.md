@@ -1292,7 +1292,7 @@ export function taskFormShell({ icon, title, description, fields, advanced, task
       ${fields.map((f) => fieldHtml(f, lastConfig, defaults)).join("")}
       ${advanced && advanced.length ? `
         <details class="advanced">
-          <summary>▾ Tuỳ chọn nâng cao</summary>
+          <summary>Tuỳ chọn nâng cao</summary>
           ${advanced.map((f) => fieldHtml(f, lastConfig, defaults)).join("")}
         </details>` : ""}
       <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>

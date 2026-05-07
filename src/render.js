@@ -279,7 +279,6 @@ export async function runRender(config) {
 
   const overlayFolder = inputs.overlays;
   const backgroundFolder = inputs.backgrounds;
-  const combinedVideosFolder = inputs.combined || null;
 
   const useGPU = ffmpegConfig.useGPU || false;
   const gpuVideoCodec = ffmpegConfig.encoder || "libx264";
@@ -330,36 +329,20 @@ export async function runRender(config) {
 
   const startTime = Date.now();
 
-  let totalVideoBackgrounds;
-
   // 1. Check overlay videos
   const totalOverlays = overlayFiles.length;
   if (totalOverlays === 0) {
     throw new Error(`Folder overlays trống, không có video nào: ${overlayFolder}`);
   }
 
-  // 2. Determine background video source
-  const hasCombinedVideos = combinedVideosFolder && fs.existsSync(combinedVideosFolder);
-  if (hasCombinedVideos) {
-    const combinedVideosFolders = fs
-      .readdirSync(combinedVideosFolder)
-      .filter((folder) =>
-        fs.lstatSync(path.join(combinedVideosFolder, folder)).isDirectory()
-      );
-    totalVideoBackgrounds = combinedVideosFolders.length;
-    runner.log("info", "Using videos from combined_videos folder");
-  } else {
-    if (!fs.existsSync(backgroundFolder)) {
-      throw new Error(`Không tìm thấy folder backgrounds: ${backgroundFolder}`);
-    }
-    const backgroundFolders = fs
-      .readdirSync(backgroundFolder)
-      .filter((folder) =>
-        fs.lstatSync(path.join(backgroundFolder, folder)).isDirectory()
-      );
-    totalVideoBackgrounds = backgroundFolders.length;
-    runner.log("info", "Using videos from backgrounds folder");
+  // 2. List background subfolders by actual name (sort natural-numeric)
+  if (!fs.existsSync(backgroundFolder)) {
+    throw new Error(`Không tìm thấy folder backgrounds: ${backgroundFolder}`);
   }
+  const backgroundFolderNames = fs.readdirSync(backgroundFolder)
+    .filter((f) => fs.lstatSync(path.join(backgroundFolder, f)).isDirectory())
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+  const totalVideoBackgrounds = backgroundFolderNames.length;
 
   // 3. Check background folder count
   if (totalVideoBackgrounds === 0) {
@@ -396,11 +379,11 @@ export async function runRender(config) {
     runner,
   };
 
-  // 6. Process each background folder
+  // 6. Process each background folder (use actual folder names, not 1..N indices)
   for (let i = 0; i < totalVideoBackgrounds; i++) {
     runner.checkAborted();
 
-    const folderName = `${i + 1}`;
+    const folderName = backgroundFolderNames[i];
     const groupFolder = path.join(outputFolder, folderName);
 
     if (!fs.existsSync(groupFolder)) {
@@ -408,20 +391,10 @@ export async function runRender(config) {
     }
 
     // 7. Get background file list
-    let backgroundFiles = [];
-    let totalBackgroundsForFolder = 0;
-
-    if (hasCombinedVideos) {
-      const combinedVideosFolderPath = path.join(combinedVideosFolder, folderName);
-      backgroundFiles = getFilesFromFolder(combinedVideosFolderPath);
-      totalBackgroundsForFolder = backgroundFiles.length;
-      runner.log("info", `Using ${totalBackgroundsForFolder} videos from combined_videos/${folderName}`);
-    } else {
-      const backgroundsFolderPath = path.join(backgroundFolder, folderName);
-      backgroundFiles = getFilesFromFolder(backgroundsFolderPath);
-      totalBackgroundsForFolder = backgroundFiles.length;
-      runner.log("info", `Using ${totalBackgroundsForFolder} videos from backgrounds/${folderName}`);
-    }
+    const backgroundsFolderPath = path.join(backgroundFolder, folderName);
+    const backgroundFiles = getFilesFromFolder(backgroundsFolderPath);
+    const totalBackgroundsForFolder = backgroundFiles.length;
+    runner.log("info", `Using ${totalBackgroundsForFolder} videos from backgrounds/${folderName}`);
 
     // 8. Check background file count
     if (totalBackgroundsForFolder === 0) {
