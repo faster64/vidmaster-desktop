@@ -1072,7 +1072,7 @@ const NAV_ITEMS = [
     { id: "render",  icon: "🎬", label: "Render Video" },
     { id: "snow",    icon: "❄️", label: "Tạo video từ ảnh" },
     { id: "trim",    icon: "✂️", label: "Cắt video 30s" },
-    { id: "cutBg",   icon: "🎞️", label: "Cắt video background" },
+    { id: "cutBg",   icon: "🎞️", label: "Chia nhỏ video nền" },
     { id: "thumb",   icon: "🖼️", label: "Tạo ảnh thu nhỏ" },
     { id: "concat",  icon: "🔗", label: "Ghép video + thumbnail" },
     { id: "rename",  icon: "✏️", label: "Sửa tên thu nhỏ" },
@@ -1292,7 +1292,7 @@ export function taskFormShell({ icon, title, description, fields, advanced, task
       ${fields.map((f) => fieldHtml(f, lastConfig, defaults)).join("")}
       ${advanced && advanced.length ? `
         <details class="advanced">
-          <summary>▾ Tuỳ chọn nâng cao</summary>
+          <summary>Tuỳ chọn nâng cao</summary>
           ${advanced.map((f) => fieldHtml(f, lastConfig, defaults)).join("")}
         </details>` : ""}
       <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
@@ -1443,7 +1443,7 @@ export async function renderRender(el) {
 
   el.innerHTML = taskFormShell({
     icon: "🎬", title: "Render Video",
-    description: "Render video chính từ background + overlay với hiệu ứng chroma key.",
+    description: "",
     fields, advanced, taskType: "render", lastConfig, defaults,
   });
   bindTaskForm(el.querySelector("#task-form"), { fields: [...fields, ...advanced], taskType: "render", defaults });
@@ -1535,8 +1535,8 @@ export async function renderCutBg(el) {
     { type: "folder", path: "output", label: "Folder output (có thể trùng)" },
   ];
   el.innerHTML = taskFormShell({
-    icon: "🎞️", title: "Cắt video background",
-    description: "Cắt video background dài thành các segment.",
+    icon: "🎞️", title: "Chia nhỏ video nền",
+    description: "Chia nhỏ video nền dài thành các segment.",
     fields, advanced: [], taskType: "cutBg", lastConfig: s.lastConfig?.cutBg, defaults,
   });
   bindTaskForm(el.querySelector("#task-form"), { fields, taskType: "cutBg", defaults });

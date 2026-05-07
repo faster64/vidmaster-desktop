@@ -2,14 +2,19 @@ import fs from "fs";
 import path from "path";
 
 export const REQUIRED_SUBFOLDERS = [
-  "overlays", "backgrounds", "combined_videos", "done",
-  "input", "output",
+  "overlays", "backgrounds", "done",
 ];
+
+const CHROMA_KEY_TEMPLATE = ``;
 
 export function ensureWorkspace(root) {
   fs.mkdirSync(root, { recursive: true });
   for (const sub of REQUIRED_SUBFOLDERS) {
     fs.mkdirSync(path.join(root, sub), { recursive: true });
+  }
+  const chromaPath = path.join(root, "chromaKey.txt");
+  if (!fs.existsSync(chromaPath)) {
+    fs.writeFileSync(chromaPath, CHROMA_KEY_TEMPLATE, "utf-8");
   }
 }
 
@@ -18,13 +23,11 @@ export function defaultsForTask(ws, type) {
   switch (type) {
     case "render":
       return {
-        inputs: { overlays: p("overlays"), backgrounds: p("backgrounds"), combined: p("combined_videos") },
+        inputs: { overlays: p("overlays"), backgrounds: p("backgrounds") },
         output: p("done"),
       };
-    case "snow":
-      return { input: p("input"), output: p("output"), snowAsset: "" };
-    case "trim":
-      return { input: p("input"), output: p("done") };
+    case "trimEnds":
+      return { input: "", output: p("done") };
     case "cutBg":
       return { input: p("backgrounds"), output: p("backgrounds") };
     default:

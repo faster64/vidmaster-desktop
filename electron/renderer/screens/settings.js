@@ -15,6 +15,12 @@ export async function renderSettings(el) {
       <div class="help">Nơi chứa các thư mục input/output mặc định.</div>
     </div>
 
+    <div class="field">
+      <label>🏷️ Mã định danh</label>
+      <input id="identifier" type="text" value="${escapeAttr(s.tracking?.identifier ?? "")}">
+      <div class="help">Hiện trong tin nhắn Telegram để phân biệt máy / channel. Để trống = fallback theo tên workspace.</div>
+    </div>
+
     <h3>FFmpeg</h3>
     <div class="field">
       <label>Encoder</label>
@@ -75,6 +81,25 @@ export async function renderSettings(el) {
       <button type="button" id="yt-update">⬇️ Cập nhật ngay</button>
     </div>
 
+    <h3>Telegram</h3>
+    <div class="field">
+      <label>Bot token</label>
+      <div class="field-row">
+        <input id="tg-token" type="password" value="${escapeAttr(s.telegram?.token ?? "")}">
+        <button type="button" id="tg-token-show">👁</button>
+      </div>
+    </div>
+    <div id="tg-secret" style="display:none">
+      <div class="field">
+        <label>Group ID</label>
+        <input id="tg-group" type="number" value="${s.telegram?.groupId ?? ""}">
+      </div>
+      <div class="field">
+        <label>Tracking chat ID</label>
+        <input id="tg-tracking" type="number" value="${s.telegram?.trackingChatId ?? ""}">
+      </div>
+    </div>
+
     <h3>Log</h3>
     <div class="field">
       <label>Mức log</label>
@@ -87,7 +112,9 @@ export async function renderSettings(el) {
 
     <h3 style="margin-top:32px">About</h3>
     <p>Version: <strong>${version}</strong></p>
-    <button id="reset" class="danger">Reset tất cả về mặc định</button>
+    <button id="reset" class="danger">Reset settings về mặc định (giữ workspace + định danh)</button>
+    <button id="reset-all" class="danger" style="margin-left:8px">🗑 Xoá toàn bộ dữ liệu — làm lại từ đầu</button>
+    <div class="help" style="margin-top:6px">"Xoá toàn bộ" sẽ xoá settings + workspace + định danh + lastConfig. App sẽ reload và yêu cầu onboarding lại. Files trong folder workspace KHÔNG bị xoá.</div>
   `;
 
   el.querySelector("#ws-pick").addEventListener("click", async () => {
@@ -98,6 +125,8 @@ export async function renderSettings(el) {
       el.querySelector("#ws").value = p;
     }
   });
+  el.querySelector("#identifier").addEventListener("change", (e) =>
+    window.api.settings.set({ "tracking.identifier": e.target.value.trim() }));
   el.querySelector("#encoder").addEventListener("change", (e) =>
     window.api.settings.set({ "ffmpeg.encoder": e.target.value }));
   el.querySelector("#maxConcurrent").addEventListener("change", (e) =>
@@ -128,6 +157,30 @@ export async function renderSettings(el) {
     const i = el.querySelector("#yt-key");
     i.type = i.type === "password" ? "text" : "password";
   });
+
+  el.querySelector("#tg-token").addEventListener("change", (e) =>
+    window.api.settings.set({ "telegram.token": e.target.value }));
+  el.querySelector("#tg-group").addEventListener("change", (e) =>
+    window.api.settings.set({ "telegram.groupId": parseInt(e.target.value, 10) }));
+  el.querySelector("#tg-tracking").addEventListener("change", (e) =>
+    window.api.settings.set({ "telegram.trackingChatId": parseInt(e.target.value, 10) }));
+  el.querySelector("#tg-token-show").addEventListener("click", () => {
+    const i = el.querySelector("#tg-token");
+    i.type = i.type === "password" ? "text" : "password";
+  });
+
+  // Ctrl+Q hiện/ẩn group + tracking IDs (gắn 1 lần, no-op khi không ở màn settings)
+  if (!el._settingsCtrlQAttached) {
+    document.addEventListener("keydown", (e) => {
+      if (el.dataset.screen !== "settings") return;
+      if (e.ctrlKey && e.key.toLowerCase() === "q") {
+        e.preventDefault();
+        const secret = el.querySelector("#tg-secret");
+        if (secret) secret.style.display = secret.style.display === "none" ? "" : "none";
+      }
+    });
+    el._settingsCtrlQAttached = true;
+  }
   el.querySelector("#yt-path-pick").addEventListener("click", async () => {
     const p = await window.api.dialog.pickFile({
       filters: [{ name: "yt-dlp", extensions: ["exe"] }],
@@ -182,11 +235,28 @@ export async function renderSettings(el) {
           autoUpdateYtDlp: false,
           maxConcurrent: 3,
         },
+        telegram: {
+          token: "8001545106:AAGRfvKJx1Rq1WFENtjAbXe9eCOSEINVdK0",
+          groupId: -5227711965,
+          trackingChatId: 8335894661,
+        },
         ui: { theme: "light", logLevel: "info", completedHistorySize: 50 },
         workspace: ws,
       });
       renderSettings(el);
     }
+  });
+  el.querySelector("#reset-all").addEventListener("click", async () => {
+    const confirmed = confirm(
+      "Bạn chắc chắn muốn XOÁ TOÀN BỘ DỮ LIỆU?\n\n" +
+      "- Settings, workspace path, định danh, lastConfig sẽ bị xoá.\n" +
+      "- App sẽ reload và yêu cầu onboarding lại.\n" +
+      "- Files trong folder workspace KHÔNG bị xoá.\n\n" +
+      "Hành động này không thể hoàn tác."
+    );
+    if (!confirmed) return;
+    await window.api.settings.resetAll();
+    location.reload();
   });
 }
 

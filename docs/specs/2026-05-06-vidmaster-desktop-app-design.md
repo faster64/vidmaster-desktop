@@ -121,7 +121,7 @@ async function runX({ /* per-task config */, signal, onProgress, onLog }) {
   - 🎬 Render Video
   - ❄️ Tạo video từ ảnh
   - ✂️ Cắt video 30s
-  - 🎞️ Cắt video background
+  - 🎞️ Chia nhỏ video nền
   - 🖼️ Tạo ảnh thu nhỏ
   - 🔗 Ghép video + thumbnail
   - ✏️ Sửa tên thu nhỏ
@@ -147,7 +147,7 @@ async function runX({ /* per-task config */, signal, onProgress, onLog }) {
 │  🔢 Số ngày             [  1  ]          │
 │  🔢 Số video / folder   [  5  ]          │
 │                                          │
-│  ▾ Tuỳ chọn nâng cao                     │
+│  Tuỳ chọn nâng cao                     │
 │   ☑ Dùng GPU (NVIDIA)                   │
 │   🎨 ChromaKey color  [#D4F9D7] [▢]     │
 │   ⏲️ Opacity  [────●────] 70%           │

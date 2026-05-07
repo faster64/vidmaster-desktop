@@ -1,20 +1,19 @@
 import { mountSidebar } from "./components/sidebar.js";
 import { mountQueueDock } from "./components/queueDock.js";
 import { renderRender } from "./screens/render.js";
-import { renderSnow } from "./screens/snow.js";
-import { renderTrim } from "./screens/trim.js";
+import { renderTrimEnds } from "./screens/trimEnds.js";
 import { renderCutBg } from "./screens/cutBg.js";
 import { renderGetUrls } from "./screens/getUrls.js";
 import { renderDownload } from "./screens/download.js";
-import { renderConcat } from "./screens/concat.js";
+import { renderConcatHeadTail } from "./screens/concatHeadTail.js";
 import { renderQueue } from "./screens/queue.js";
 import { renderSettings } from "./screens/settings.js";
 import { renderOnboarding } from "./screens/onboarding.js";
 import { toast } from "./components/toast.js";
 
 const screens = {
-  render: renderRender, snow: renderSnow, trim: renderTrim, cutBg: renderCutBg,
-  getUrls: renderGetUrls, download: renderDownload, concat: renderConcat,
+  render: renderRender, trimEnds: renderTrimEnds, cutBg: renderCutBg,
+  getUrls: renderGetUrls, download: renderDownload, concatHeadTail: renderConcatHeadTail,
   queue: renderQueue, settings: renderSettings,
 };
 
@@ -26,6 +25,7 @@ async function navigate(name) {
   const fn = screens[name];
   if (!fn) return;
   contentEl.innerHTML = "";
+  contentEl.dataset.screen = name;
   await fn(contentEl);
   document.querySelectorAll(".nav-item").forEach((el) => el.classList.toggle("active", el.dataset.screen === name));
   window.location.hash = name;
@@ -38,13 +38,19 @@ window.addEventListener("hashchange", () => {
 
 async function bootstrap() {
   const ws = await window.api.app.getWorkspace();
-  if (!ws) {
+  const identifier = (await window.api.settings.get("tracking.identifier")) ?? "";
+  if (!ws || !identifier) {
     contentEl.innerHTML = "";
-    await renderOnboarding(contentEl, async (chosen) => {
-      await window.api.settings.set({ workspace: chosen });
-      await navigate("render");
+    await new Promise((resolve) => {
+      renderOnboarding(
+        contentEl,
+        { initialWorkspace: ws ?? "", initialIdentifier: identifier },
+        async ({ workspace, identifier }) => {
+          await window.api.settings.set({ workspace, "tracking.identifier": identifier });
+          resolve();
+        },
+      );
     });
-    return;
   }
   mountSidebar(sidebarEl, navigate);
   mountQueueDock(dockEl);
@@ -70,7 +76,7 @@ window.api.queue.onUpdate((state) => {
 });
 
 const TASK_LABELS = {
-  render: "Render Video", snow: "Snow", trim: "Trim", cutBg: "Cut BG",
-  getUrls: "Lấy link kênh", download: "Tải video", concat: "Nối video",
+  render: "Render Video", trimEnds: "Cắt đầu/cuối", cutBg: "Chia nhỏ video nền",
+  getUrls: "Lấy link kênh", download: "Tải video", concatHeadTail: "Nối đầu/cuối",
 };
 function labelOf(t) { return TASK_LABELS[t] || t; }

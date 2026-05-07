@@ -79,6 +79,7 @@ export class QueueManager {
     if (this.running || this.pending.length === 0) return;
     const job = this.pending.shift();
     job.status = "running";
+    job.startedAt = Date.now();
     job.controller = new AbortController();
     this.running = job;
     this._emit();
@@ -127,6 +128,7 @@ export class QueueManager {
   }
 
   _finish(job) {
+    job.finishedAt = Date.now();
     this.running = null;
     this._pushCompleted(job);
     this._emit();

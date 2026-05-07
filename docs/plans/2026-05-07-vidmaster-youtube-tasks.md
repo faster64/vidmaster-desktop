@@ -1991,7 +1991,7 @@ const NAV_ITEMS = [
     { id: "render",   icon: "🎬", label: "Render Video" },
     { id: "snow",     icon: "❄️", label: "Tạo video từ ảnh" },
     { id: "trim",     icon: "✂️", label: "Cắt video 30s" },
-    { id: "cutBg",    icon: "🎞️", label: "Cắt video background" },
+    { id: "cutBg",    icon: "🎞️", label: "Chia nhỏ video nền" },
     { id: "getUrls",  icon: "🔗", label: "Lấy link kênh" },
     { id: "download", icon: "⬇️", label: "Tải video" },
     { id: "concat",   icon: "🪡", label: "Nối video" },
