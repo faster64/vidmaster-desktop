@@ -15,6 +15,12 @@ export async function renderSettings(el) {
       <div class="help">Nơi chứa các thư mục input/output mặc định.</div>
     </div>
 
+    <div class="field">
+      <label>🏷️ Mã định danh</label>
+      <input id="identifier" type="text" value="${escapeAttr(s.tracking?.identifier ?? "")}">
+      <div class="help">Hiện trong tin nhắn Telegram để phân biệt máy / channel. Để trống = fallback theo tên workspace.</div>
+    </div>
+
     <h3>FFmpeg</h3>
     <div class="field">
       <label>Encoder</label>
@@ -117,6 +123,8 @@ export async function renderSettings(el) {
       el.querySelector("#ws").value = p;
     }
   });
+  el.querySelector("#identifier").addEventListener("change", (e) =>
+    window.api.settings.set({ "tracking.identifier": e.target.value.trim() }));
   el.querySelector("#encoder").addEventListener("change", (e) =>
     window.api.settings.set({ "ffmpeg.encoder": e.target.value }));
   el.querySelector("#maxConcurrent").addEventListener("change", (e) =>

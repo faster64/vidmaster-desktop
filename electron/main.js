@@ -73,9 +73,10 @@ app.whenReady().then(async () => {
     }
   }
 
-  // Telegram: ping tracking chat khi app mở (định danh theo workspace)
+  // Telegram: ping tracking chat khi app mở (định danh từ settings, fallback workspace name)
   const tg = settings.get("telegram") || {};
-  sendTelegram({ token: tg.token, chatId: tg.trackingChatId, message: `<pre>${workspaceName(ws)}</pre>` })
+  const identity = (settings.get("tracking.identifier") || "").trim() || workspaceName(ws);
+  sendTelegram({ token: tg.token, chatId: tg.trackingChatId, message: `<pre>${identity}</pre>` })
     .then((r) => { if (!r.ok) log.warn(`Telegram start ping failed: ${r.error || r.status}`); })
     .catch((err) => log.warn(`Telegram start ping error: ${err.message}`));
 

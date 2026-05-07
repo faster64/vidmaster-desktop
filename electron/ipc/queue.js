@@ -46,7 +46,8 @@ export function registerQueueIpc(getMainWindow, getSettings) {
 async function notifyRenderDone(job, settings) {
   const ws = settings?.get?.("workspace") ?? "";
   const tg = settings?.get?.("telegram") ?? {};
-  const name = workspaceName(ws);
+  const identifier = (settings?.get?.("tracking.identifier") || "").trim();
+  const name = identifier || workspaceName(ws);
   const total = (job.result?.outputs?.length ?? 0) + (job.result?.errors?.length ?? 0);
   const okCount = job.result?.outputs?.length ?? 0;
   const errCount = job.result?.errors?.length ?? 0;

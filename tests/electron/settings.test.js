@@ -38,7 +38,7 @@ describe("settings store", () => {
     s.set({ workspace: "D:\\Test" });
     const all = s.get();
     expect(all.workspace).toBe("D:\\Test");
-    expect(all.version).toBe(3);
+    expect(all.version).toBe(4);
   });
 
   it("notifies onChange subscribers", () => {
@@ -49,12 +49,12 @@ describe("settings store", () => {
     expect(cb).toHaveBeenCalledWith(expect.objectContaining({ workspace: "D:\\Other" }));
   });
 
-  it("migrates v1 store to current version with default youtube/download/telegram keys", () => {
+  it("migrates v1 store to current version with default youtube/download/telegram/tracking keys", () => {
     const s = createSettings();
     s.set({ workspace: "D:\\Test", version: 1 });
     // Re-create to trigger migration
     const s2 = createSettings();
-    expect(s2.get("version")).toBe(3);
+    expect(s2.get("version")).toBe(4);
     expect(s2.get("youtube.apiKey")).toBe("AIzaSyDZTsPGvG0u5du3t7YGueGgnNi7IiulMus");
     expect(s2.get("youtube.minDurationMinutes")).toBe(8);
     expect(s2.get("youtube.sortOrder")).toBe("VIEW");
@@ -64,13 +64,15 @@ describe("settings store", () => {
     expect(s2.get("telegram.token")).toMatch(/^\d+:/);
     expect(s2.get("telegram.groupId")).toBe(-5227711965);
     expect(s2.get("telegram.trackingChatId")).toBe(8335894661);
+    expect(s2.get("tracking.identifier")).toBe("");
     expect(s2.get("workspace")).toBe("D:\\Test"); // preserved
   });
 
   it("returns defaults for new install (no migration needed)", () => {
     const s = createSettings();
-    expect(s.get("version")).toBe(3);
+    expect(s.get("version")).toBe(4);
     expect(s.get("youtube.minDurationMinutes")).toBe(8);
     expect(s.get("telegram.token")).toMatch(/^\d+:/);
+    expect(s.get("tracking.identifier")).toBe("");
   });
 });

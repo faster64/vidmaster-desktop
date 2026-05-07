@@ -38,12 +38,17 @@ window.addEventListener("hashchange", () => {
 
 async function bootstrap() {
   const ws = await window.api.app.getWorkspace();
-  if (!ws) {
+  const identifier = (await window.api.settings.get("tracking.identifier")) ?? "";
+  if (!ws || !identifier) {
     contentEl.innerHTML = "";
-    await renderOnboarding(contentEl, async (chosen) => {
-      await window.api.settings.set({ workspace: chosen });
-      await navigate("render");
-    });
+    await renderOnboarding(
+      contentEl,
+      { initialWorkspace: ws ?? "", initialIdentifier: identifier },
+      async ({ workspace, identifier }) => {
+        await window.api.settings.set({ workspace, "tracking.identifier": identifier });
+        await navigate("render");
+      },
+    );
     return;
   }
   mountSidebar(sidebarEl, navigate);
