@@ -60,3 +60,17 @@ if (r4.status !== 0) {
   process.exit(1);
 }
 console.log("✓ tiny-silent.mp4");
+
+// 5. tiny-avatar-square.png — 100×100 solid red (avatar fixture)
+const avatarPng = path.join(__dirname, "tiny-avatar-square.png");
+await sharp({
+  create: { width: 100, height: 100, channels: 4, background: { r: 220, g: 30, b: 30, alpha: 1 } },
+}).png().toFile(avatarPng);
+console.log("✓ tiny-avatar-square.png");
+
+// 6. tiny-avatar-square.jpg — 100×100 solid blue (avatar fixture, JPG variant)
+const avatarJpg = path.join(__dirname, "tiny-avatar-square.jpg");
+await sharp({
+  create: { width: 100, height: 100, channels: 3, background: { r: 30, g: 30, b: 220 } },
+}).jpeg({ quality: 90 }).toFile(avatarJpg);
+console.log("✓ tiny-avatar-square.jpg");

@@ -6,6 +6,7 @@ const NAV_ITEMS = [
     { id: "concatHeadTail", icon: "😍", label: "Nối đầu/cuối" },
     { id: "getUrls",  icon: "🔗", label: "Lấy link kênh" },
     { id: "download", icon: "⬇️", label: "Tải video" },
+    { id: "thumbAvatar", icon: "🪪", label: "Gắn avatar vào thumbnail" },
   ]},
   { group: "Hệ thống", items: [
     { id: "queue",    icon: "📋", label: "Hàng đợi" },
