@@ -1,4 +1,4 @@
-import { toast } from "../components/toast.js";
+import { runWithFeedback } from "../components/buttonFeedback.js";
 
 export async function renderDownload(el) {
   const s = await window.api.settings.get();
@@ -62,9 +62,11 @@ export async function renderDownload(el) {
       urlsFile, output, maxConcurrent,
       ytdlpPath: s.download.ytdlpPath,
     };
-    await window.api.queue.add({ type: "download", config });
-    await window.api.settings.set({ "lastConfig.download": { urlsFile, output, maxConcurrent } });
-    toast({ kind: "success", message: "✅ Đã thêm vào hàng đợi" });
+    const submitBtn = el.querySelector('button[type="submit"]');
+    await runWithFeedback(submitBtn, async () => {
+      await window.api.queue.add({ type: "download", config });
+      await window.api.settings.set({ "lastConfig.download": { urlsFile, output, maxConcurrent } });
+    });
   });
 }
 

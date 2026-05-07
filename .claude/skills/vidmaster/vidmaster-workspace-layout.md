@@ -19,9 +19,7 @@ The user's workspace is a single root directory containing the following subfold
 |---|---|
 | `overlays/` | Render (input) |
 | `backgrounds/` | Render (input), CutBg (input + output) |
-| `done/` | Render (output), Trim (output) |
-| `input/` | Snow (input), Trim (input) |
-| `output/` | Snow (output) |
+| `done/` | Render / Trim / TrimEnds / Snow (output) |
 | `chromaKey.txt` (file) | Render — per-overlay chroma colors (Line mode); auto-created with template if missing |
 
 `REQUIRED_SUBFOLDERS` in `electron/workspace.js` is the source of truth for folders. The `chromaKey.txt` template is also written by `ensureWorkspace()` if the file doesn't already exist. To add a new subfolder, also update `defaultsForTask()`.

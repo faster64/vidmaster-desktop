@@ -1,5 +1,5 @@
 import { mountReorderableList } from "../components/reorderableList.js";
-import { toast } from "../components/toast.js";
+import { runWithFeedback } from "../components/buttonFeedback.js";
 
 export async function renderConcat(el) {
   const s = await window.api.settings.get();
@@ -96,12 +96,14 @@ export async function renderConcat(el) {
       if (!confirm(`File ${output} đã tồn tại. Ghi đè?`)) return;
     }
 
-    await window.api.queue.add({
-      type: "concat",
-      config: { inputs: items.map((i) => i.key), output },
+    const submitBtn = el.querySelector('button[type="submit"]');
+    await runWithFeedback(submitBtn, async () => {
+      await window.api.queue.add({
+        type: "concat",
+        config: { inputs: items.map((i) => i.key), output },
+      });
+      await window.api.settings.set({ "lastConfig.concat": { folder, outputName: name } });
     });
-    await window.api.settings.set({ "lastConfig.concat": { folder, outputName: name } });
-    toast({ kind: "success", message: "✅ Đã thêm vào hàng đợi" });
   });
 
   await reload();

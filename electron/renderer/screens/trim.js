@@ -3,7 +3,7 @@ import { taskFormShell, bindTaskForm } from "../components/taskForm.js";
 export async function renderTrim(el) {
   const ws = await window.api.app.getWorkspace();
   const s = await window.api.settings.get();
-  const defaults = { input: `${ws}\\input`, output: `${ws}\\done`, segmentSeconds: 30, replace: false };
+  const defaults = { input: "", output: `${ws}\\done`, segmentSeconds: 30, replace: false };
   const fields = [
     { type: "folder",   path: "input",          label: "Folder input",  required: true, mustExist: "folder" },
     { type: "folder",   path: "output",         label: "Folder output", required: true },

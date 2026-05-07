@@ -3,7 +3,6 @@ import path from "path";
 
 export const REQUIRED_SUBFOLDERS = [
   "overlays", "backgrounds", "done",
-  "input", "output",
 ];
 
 const CHROMA_KEY_TEMPLATE = ``;
@@ -28,9 +27,11 @@ export function defaultsForTask(ws, type) {
         output: p("done"),
       };
     case "snow":
-      return { input: p("input"), output: p("output"), snowAsset: "" };
+      return { input: "", output: p("done"), snowAsset: "" };
     case "trim":
-      return { input: p("input"), output: p("done") };
+      return { input: "", output: p("done") };
+    case "trimEnds":
+      return { input: "", output: p("done") };
     case "cutBg":
       return { input: p("backgrounds"), output: p("backgrounds") };
     default:

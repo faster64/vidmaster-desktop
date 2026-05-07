@@ -3,6 +3,7 @@ const NAV_ITEMS = [
     { id: "render",   icon: "🎬", label: "Render Video" },
     { id: "snow",     icon: "❄️", label: "Tạo video từ ảnh" },
     { id: "trim",     icon: "✂️", label: "Cắt video 30s" },
+    { id: "trimEnds", icon: "⏱️", label: "Cắt đầu/cuối" },
     { id: "cutBg",    icon: "🎞️", label: "Chia nhỏ video nền" },
     { id: "getUrls",  icon: "🔗", label: "Lấy link kênh" },
     { id: "download", icon: "⬇️", label: "Tải video" },

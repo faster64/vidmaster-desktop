@@ -71,7 +71,7 @@ export async function renderQueue(el) {
 }
 
 const LABELS = {
-  render: "Render Video", snow: "Snow", trim: "Trim", cutBg: "Cut BG",
+  render: "Render Video", snow: "Snow", trim: "Trim", trimEnds: "Cắt đầu/cuối", cutBg: "Cut BG",
   getUrls: "Lấy link kênh", download: "Tải video", concat: "Nối video",
   _ytdlpUpdate: "Cập nhật yt-dlp",
 };

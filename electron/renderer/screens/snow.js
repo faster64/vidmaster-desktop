@@ -3,7 +3,7 @@ import { taskFormShell, bindTaskForm } from "../components/taskForm.js";
 export async function renderSnow(el) {
   const ws = await window.api.app.getWorkspace();
   const s = await window.api.settings.get();
-  const defaults = { input: `${ws}\\input`, output: `${ws}\\output`, snowAsset: "", duration: 12 };
+  const defaults = { input: "", output: `${ws}\\done`, snowAsset: "", duration: 12 };
   const fields = [
     { type: "folder", path: "input",      label: "Folder ảnh đầu vào",          required: true, mustExist: "folder" },
     { type: "folder", path: "output",     label: "Folder video output",         required: true },

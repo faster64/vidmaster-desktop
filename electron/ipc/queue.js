@@ -3,6 +3,7 @@ import { QueueManager } from "../queue.js";
 import { runRender } from "../../src/render.js";
 import { runSnow } from "../../src/snow.js";
 import { runTrim } from "../../src/trim.js";
+import { runTrimEnds } from "../../src/trimEnds.js";
 import { runCutBg } from "../../src/cutBg.js";
 import { runGetUrls } from "../../src/getUrls.js";
 import { runDownload } from "../../src/download.js";
@@ -11,7 +12,7 @@ import { runYtdlpUpdate } from "./ytdlp.js";
 
 export function registerQueueIpc(getMainWindow) {
   const runners = {
-    render: runRender, snow: runSnow, trim: runTrim, cutBg: runCutBg,
+    render: runRender, snow: runSnow, trim: runTrim, trimEnds: runTrimEnds, cutBg: runCutBg,
     getUrls: runGetUrls, download: runDownload, concat: runConcat,
     _ytdlpUpdate: runYtdlpUpdate,
   };

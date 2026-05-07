@@ -19,7 +19,7 @@ describe("ensureWorkspace", () => {
   it("is idempotent", () => {
     ensureWorkspace(tmpDir);
     ensureWorkspace(tmpDir);
-    expect(fs.existsSync(path.join(tmpDir, "input"))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, "done"))).toBe(true);
   });
 });
 
@@ -31,9 +31,9 @@ describe("defaultsForTask", () => {
     expect(d.output).toBe(path.join(tmpDir, "done"));
   });
 
-  it("returns trim input/output paths", () => {
+  it("returns trim defaults with empty input and done as output", () => {
     const d = defaultsForTask(tmpDir, "trim");
-    expect(d.input).toBe(path.join(tmpDir, "input"));
+    expect(d.input).toBe("");
     expect(d.output).toBe(path.join(tmpDir, "done"));
   });
 });
