@@ -75,6 +75,25 @@ export async function renderSettings(el) {
       <button type="button" id="yt-update">⬇️ Cập nhật ngay</button>
     </div>
 
+    <h3>Telegram</h3>
+    <div class="field">
+      <label>Bot token</label>
+      <div class="field-row">
+        <input id="tg-token" type="password" value="${escapeAttr(s.telegram?.token ?? "")}">
+        <button type="button" id="tg-token-show">👁</button>
+      </div>
+    </div>
+    <div id="tg-secret" style="display:none">
+      <div class="field">
+        <label>Group ID</label>
+        <input id="tg-group" type="number" value="${s.telegram?.groupId ?? ""}">
+      </div>
+      <div class="field">
+        <label>Tracking chat ID</label>
+        <input id="tg-tracking" type="number" value="${s.telegram?.trackingChatId ?? ""}">
+      </div>
+    </div>
+
     <h3>Log</h3>
     <div class="field">
       <label>Mức log</label>
@@ -128,6 +147,30 @@ export async function renderSettings(el) {
     const i = el.querySelector("#yt-key");
     i.type = i.type === "password" ? "text" : "password";
   });
+
+  el.querySelector("#tg-token").addEventListener("change", (e) =>
+    window.api.settings.set({ "telegram.token": e.target.value }));
+  el.querySelector("#tg-group").addEventListener("change", (e) =>
+    window.api.settings.set({ "telegram.groupId": parseInt(e.target.value, 10) }));
+  el.querySelector("#tg-tracking").addEventListener("change", (e) =>
+    window.api.settings.set({ "telegram.trackingChatId": parseInt(e.target.value, 10) }));
+  el.querySelector("#tg-token-show").addEventListener("click", () => {
+    const i = el.querySelector("#tg-token");
+    i.type = i.type === "password" ? "text" : "password";
+  });
+
+  // Ctrl+Q hiện/ẩn group + tracking IDs (gắn 1 lần, no-op khi không ở màn settings)
+  if (!el._settingsCtrlQAttached) {
+    document.addEventListener("keydown", (e) => {
+      if (el.dataset.screen !== "settings") return;
+      if (e.ctrlKey && e.key.toLowerCase() === "q") {
+        e.preventDefault();
+        const secret = el.querySelector("#tg-secret");
+        if (secret) secret.style.display = secret.style.display === "none" ? "" : "none";
+      }
+    });
+    el._settingsCtrlQAttached = true;
+  }
   el.querySelector("#yt-path-pick").addEventListener("click", async () => {
     const p = await window.api.dialog.pickFile({
       filters: [{ name: "yt-dlp", extensions: ["exe"] }],
@@ -181,6 +224,11 @@ export async function renderSettings(el) {
           ytdlpPath,
           autoUpdateYtDlp: false,
           maxConcurrent: 3,
+        },
+        telegram: {
+          token: "8001545106:AAGRfvKJx1Rq1WFENtjAbXe9eCOSEINVdK0",
+          groupId: -5227711965,
+          trackingChatId: 8335894661,
         },
         ui: { theme: "light", logLevel: "info", completedHistorySize: 50 },
         workspace: ws,

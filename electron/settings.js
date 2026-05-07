@@ -2,8 +2,13 @@ import { app } from "electron";
 import path from "path";
 import Store from "electron-store";
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const DEFAULT_API_KEY = "AIzaSyDZTsPGvG0u5du3t7YGueGgnNi7IiulMus";
+const DEFAULT_TELEGRAM = {
+  token: "8001545106:AAGRfvKJx1Rq1WFENtjAbXe9eCOSEINVdK0",
+  groupId: -5227711965,
+  trackingChatId: 8335894661,
+};
 
 function defaultYtdlpPath() {
   return path.join(app.getPath("appData"), "VidMaster", "bin", "yt-dlp.exe");
@@ -31,6 +36,7 @@ function buildDefaults() {
       autoUpdateYtDlp: false,
       maxConcurrent: 3,
     },
+    telegram: { ...DEFAULT_TELEGRAM },
     ui: { theme: "light", logLevel: "info", completedHistorySize: 50 },
     lastUsedTask: "render",
     lastConfig: {},
@@ -50,6 +56,13 @@ function migrate(store) {
       ytdlpPath: store.get("download.ytdlpPath") ?? defaultYtdlpPath(),
       autoUpdateYtDlp: store.get("download.autoUpdateYtDlp") ?? false,
       maxConcurrent: store.get("download.maxConcurrent") ?? 3,
+    });
+  }
+  if (v < 3) {
+    store.set("telegram", {
+      token: store.get("telegram.token") ?? DEFAULT_TELEGRAM.token,
+      groupId: store.get("telegram.groupId") ?? DEFAULT_TELEGRAM.groupId,
+      trackingChatId: store.get("telegram.trackingChatId") ?? DEFAULT_TELEGRAM.trackingChatId,
     });
   }
   store.set("version", SCHEMA_VERSION);

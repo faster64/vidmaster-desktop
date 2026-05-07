@@ -14,6 +14,7 @@ import { detectEncoder } from "./gpuDetect.js";
 import { existsSync } from "fs";
 import { updateBinary } from "../src/_lib/ytdlp.js";
 import { ensureWorkspace } from "./workspace.js";
+import { sendTelegram, workspaceName } from "./telegram.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -55,7 +56,7 @@ app.whenReady().then(async () => {
     settings.set({ "ffmpeg.encoder": picked });
     log.info(`Detected ffmpeg encoder: ${picked}`);
   }
-  const queue = registerQueueIpc(getMainWindow);
+  const queue = registerQueueIpc(getMainWindow, () => settings);
   registerLogIpc(() => queue);
   registerDialogIpc();
   registerShellIpc(() => log.transports.file.getFile().path);
@@ -71,6 +72,12 @@ app.whenReady().then(async () => {
       log.warn(`ensureWorkspace failed on startup: ${err.message}`);
     }
   }
+
+  // Telegram: ping tracking chat khi app mở (định danh theo workspace)
+  const tg = settings.get("telegram") || {};
+  sendTelegram({ token: tg.token, chatId: tg.trackingChatId, message: `<pre>${workspaceName(ws)}</pre>` })
+    .then((r) => { if (!r.ok) log.warn(`Telegram start ping failed: ${r.error || r.status}`); })
+    .catch((err) => log.warn(`Telegram start ping error: ${err.message}`));
 
   if (settings.get("download.autoUpdateYtDlp")) {
     const ytdlpPath = settings.get("download.ytdlpPath");
