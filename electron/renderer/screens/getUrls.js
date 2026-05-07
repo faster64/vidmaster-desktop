@@ -1,4 +1,4 @@
-import { toast } from "../components/toast.js";
+import { runWithFeedback } from "../components/buttonFeedback.js";
 
 export async function renderGetUrls(el) {
   const s = await window.api.settings.get();
@@ -35,12 +35,15 @@ export async function renderGetUrls(el) {
       sortOrder: s.youtube.sortOrder,
       workspace: ws,
     };
-    await window.api.queue.add({ type: "getUrls", config });
-    await window.api.settings.set({ "lastConfig.getUrls": { handle } });
-    toast({ kind: "success", message: "✅ Đã thêm vào hàng đợi" });
+    const submitBtn = el.querySelector('button[type="submit"]');
+    await runWithFeedback(submitBtn, async () => {
+      await window.api.queue.add({ type: "getUrls", config });
+      await window.api.settings.set({ "lastConfig.getUrls": { handle } });
+    });
   });
 
-  window.api.queue.onUpdate(async (state) => {
+  const unsubGetUrls = window.api.queue.onUpdate(async (state) => {
+    if (el.dataset.screen !== "getUrls") { unsubGetUrls?.(); return; }
     const last = state.completed.find((j) => j.type === "getUrls" && j.status === "done");
     if (!last) return;
     const infosPath = last.result?.outputs?.[1];

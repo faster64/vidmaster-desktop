@@ -1,5 +1,6 @@
 import { validateConfig } from "./validation.js";
 import { toast } from "./toast.js";
+import { runWithFeedback } from "./buttonFeedback.js";
 
 export function taskFormShell({ icon, title, description, fields, advanced, taskType, lastConfig, defaults }) {
   return `
@@ -125,8 +126,10 @@ export function bindTaskForm(formEl, { fields, taskType, defaults }) {
       return;
     }
 
-    await window.api.queue.add({ type: taskType, config });
-    await window.api.settings.set({ [`lastConfig.${taskType}`]: config });
-    toast({ kind: "success", message: "✅ Đã thêm vào hàng đợi" });
+    const submitBtn = formEl.querySelector('button[type="submit"]');
+    await runWithFeedback(submitBtn, async () => {
+      await window.api.queue.add({ type: taskType, config });
+      await window.api.settings.set({ [`lastConfig.${taskType}`]: config });
+    });
   });
 }
