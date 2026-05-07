@@ -58,7 +58,7 @@ export async function renderRender(el) {
 
   el.innerHTML = taskFormShell({
     icon: "🎬", title: "Render Video",
-    description: "Render video chính từ background + overlay với hiệu ứng chroma key.",
+    description: "",
     fields, advanced, taskType: "render", lastConfig, defaults,
   }) + `
     <div id="render-log-panel" class="log-panel" style="display:none">
@@ -96,22 +96,52 @@ export async function renderRender(el) {
   typeSel.addEventListener("change", applyType);
   applyType();
 
-  // Live log panel — only visible when a render task is running
+  // Live log panel — shows running render OR most recent completed render
   const logPanel = el.querySelector("#render-log-panel");
   const logBody = el.querySelector("#render-log-body");
   const logStatus = el.querySelector("#render-log-status");
+  let lastTargetId = null;
+
+  const updateLogPanel = (state) => {
+    const running = state.running?.type === "render" ? state.running : null;
+    const lastCompleted = state.completed.find((j) => j.type === "render");
+    const target = running || lastCompleted;
+    if (!target) {
+      logPanel.style.display = "none";
+      lastTargetId = null;
+      return;
+    }
+    const wasHidden = logPanel.style.display === "none";
+    const targetChanged = target.id !== lastTargetId;
+    lastTargetId = target.id;
+    logPanel.style.display = "";
+    if (running) {
+      logStatus.textContent = `▶ ${target.progress}% — ${target.message ?? ""}`;
+    } else {
+      logStatus.textContent = `${statusIcon(target.status)} ${target.status} • ${ago(target.createdAt)}`;
+    }
+    renderLogs(logBody, target.logs);
+    // Scroll into view only when a new running job appears
+    if ((wasHidden || targetChanged) && running) {
+      logPanel.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  };
 
   const unsubLog = window.api.queue.onUpdate((state) => {
     if (el.dataset.screen !== "render") { unsubLog?.(); return; }
-    const r = state.running;
-    if (!r || r.type !== "render") {
-      logPanel.style.display = "none";
-      return;
-    }
-    logPanel.style.display = "";
-    logStatus.textContent = `${r.progress}% — ${r.message ?? ""}`;
-    renderLogs(logBody, r.logs);
+    updateLogPanel(state);
   });
+  // Populate immediately on mount so prior logs are visible after navigating back
+  window.api.queue.getState().then(updateLogPanel);
+}
+
+function statusIcon(s) { return ({ done: "✅", error: "❌", cancelled: "🚫", running: "▶" })[s] || "•"; }
+
+function ago(ts) {
+  const sec = Math.round((Date.now() - ts) / 1000);
+  if (sec < 60) return `${sec}s trước`;
+  if (sec < 3600) return `${Math.round(sec / 60)} phút trước`;
+  return `${Math.round(sec / 3600)} giờ trước`;
 }
 
 function renderLogs(container, logs) {

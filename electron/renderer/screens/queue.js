@@ -17,7 +17,16 @@ export async function renderQueue(el) {
           ${progressBar(state.running.progress)}
           <button data-cancel="${state.running.id}" class="danger">✕ Huỷ</button>
         </div>
-        ${logPanelHtml(state.running.logs)}` : `<p style="color:var(--muted)">Không có task nào đang chạy.</p>`}
+        ${logPanelHtml(state.running.logs, "Log đang chạy")}` : (() => {
+          const last = state.completed[0];
+          if (!last) return `<p style="color:var(--muted)">Không có task nào đang chạy.</p>`;
+          return `
+            <p style="color:var(--muted)">Không có task nào đang chạy. Log task gần nhất:</p>
+            <div class="queue-item">
+              <span class="label">${statusIcon(last.status)} ${labelFor(last.type)} <span style="color:var(--muted)">${ago(last.createdAt)}</span></span>
+            </div>
+            ${logPanelHtml(last.logs, `Log gần nhất — ${last.status}`)}`;
+        })()}
       <h3>⏸ Đang chờ (${state.pending.length})</h3>
       ${state.pending.map((j) => `
         <div class="queue-item">
@@ -80,12 +89,12 @@ function parentDir(filePath) {
 function escapeAttr(s) { return String(s).replace(/"/g, "&quot;"); }
 function escapeHtml(s) { return String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
 
-function logPanelHtml(logs) {
+function logPanelHtml(logs, title = "Log") {
   if (!logs || logs.length === 0) return "";
   const lines = logs.slice(-MAX_LOG_LINES);
   return `
     <div class="log-panel">
-      <div class="log-panel-header"><strong>📜 Log</strong></div>
+      <div class="log-panel-header"><strong>📜 ${escapeHtml(title)}</strong></div>
       <div class="log-body">${lines.map((l) => `<div class="log-line log-${l.level}"><span class="log-time">${fmtTime(l.ts)}</span>${escapeHtml(l.line)}</div>`).join("")}</div>
     </div>`;
 }

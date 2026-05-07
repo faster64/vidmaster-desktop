@@ -1443,7 +1443,7 @@ export async function renderRender(el) {
 
   el.innerHTML = taskFormShell({
     icon: "🎬", title: "Render Video",
-    description: "Render video chính từ background + overlay với hiệu ứng chroma key.",
+    description: "",
     fields, advanced, taskType: "render", lastConfig, defaults,
   });
   bindTaskForm(el.querySelector("#task-form"), { fields: [...fields, ...advanced], taskType: "render", defaults });
