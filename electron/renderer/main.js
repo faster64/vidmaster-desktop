@@ -39,22 +39,24 @@ window.addEventListener("hashchange", () => {
 });
 
 async function bootstrap() {
-  const ws = await window.api.app.getWorkspace();
-  const identifier = (await window.api.settings.get("tracking.identifier")) ?? "";
-  if (!ws || !identifier) {
+  const list = await window.api.workspace.list();
+  if (list.length === 0) {
     contentEl.innerHTML = "";
     await new Promise((resolve) => {
       renderOnboarding(
         contentEl,
-        { initialWorkspace: ws ?? "", initialIdentifier: identifier },
+        { initialWorkspace: "", initialIdentifier: "" },
         async ({ workspace, identifier }) => {
-          await window.api.settings.set({ workspace, "tracking.identifier": identifier });
+          await window.api.app.ensureWorkspace(workspace);
+          const ws = await window.api.workspace.create({ path: workspace, identifier });
+          await window.api.workspace.setActive(ws.id);
+          await window.api.app.trackingPing();
           resolve();
         },
       );
     });
   }
-  mountSidebar(sidebarEl, navigate);
+  await mountSidebar(sidebarEl, navigate);
   mountQueueDock(dockEl);
   const initial = window.location.hash.slice(1) || "render";
   await navigate(initial);

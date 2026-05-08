@@ -63,3 +63,50 @@ export async function showErrorModal({ summary, error, jobId }) {
 }
 
 function escape(s) { return String(s).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
+function escapeAttr(s) { return String(s ?? "").replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c])); }
+
+/**
+ * Show a prompt modal. Resolves to the trimmed string value, or null on cancel.
+ */
+export function showPromptModal({ title, label, defaultValue = "", placeholder = "", okText = "OK", cancelText = "Huỷ" }) {
+  return new Promise((resolve) => {
+    const r = root();
+    r.innerHTML = `
+      <div class="modal-backdrop">
+        <div class="modal">
+          <div class="modal-header">${escape(title)}</div>
+          <div class="modal-body">
+            <label style="display:block;margin-bottom:6px">${escape(label)}</label>
+            <input id="prompt-input" type="text" value="${escapeAttr(defaultValue)}" placeholder="${escapeAttr(placeholder)}" style="width:100%;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;font:inherit">
+          </div>
+          <div class="modal-footer">
+            <button id="prompt-cancel">${escape(cancelText)}</button>
+            <button id="prompt-ok" class="primary" style="margin-left:8px">${escape(okText)}</button>
+          </div>
+        </div>
+      </div>`;
+    const close = (value) => {
+      r.innerHTML = "";
+      resolve(value);
+    };
+    const input = r.querySelector("#prompt-input");
+    input.focus();
+    input.select();
+    r.querySelector("#prompt-ok").addEventListener("click", () => {
+      const v = input.value.trim();
+      close(v || null);
+    });
+    r.querySelector("#prompt-cancel").addEventListener("click", () => close(null));
+    r.querySelector(".modal-backdrop").addEventListener("click", (e) => {
+      if (e.target.matches(".modal-backdrop")) close(null);
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const v = input.value.trim();
+        close(v || null);
+      } else if (e.key === "Escape") {
+        close(null);
+      }
+    });
+  });
+}

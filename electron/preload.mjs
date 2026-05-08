@@ -18,6 +18,14 @@ contextBridge.exposeInMainWorld("api", {
     resetAll: () => ipcRenderer.invoke("settings:resetAll"),
     onChange: (cb) => { subscribers["settings:change"].add(cb); return () => subscribers["settings:change"].delete(cb); },
   },
+  workspace: {
+    list: () => ipcRenderer.invoke("workspace:list"),
+    getActive: () => ipcRenderer.invoke("workspace:getActive"),
+    create: ({ path, identifier }) => ipcRenderer.invoke("workspace:create", { path, identifier }),
+    setActive: (id) => ipcRenderer.invoke("workspace:setActive", id),
+    update: (id, patch) => ipcRenderer.invoke("workspace:update", { id, patch }),
+    remove: (id) => ipcRenderer.invoke("workspace:remove", id),
+  },
   dialog: {
     pickFolder: (defaultPath) => ipcRenderer.invoke("dialog:pickFolder", defaultPath),
     pickFile: (opts) => ipcRenderer.invoke("dialog:pickFile", opts),
@@ -30,6 +38,7 @@ contextBridge.exposeInMainWorld("api", {
     getVersion: () => ipcRenderer.invoke("app:getVersion"),
     getWorkspace: () => ipcRenderer.invoke("app:getWorkspace"),
     ensureWorkspace: (root) => ipcRenderer.invoke("app:ensureWorkspace", root),
+    trackingPing: () => ipcRenderer.invoke("app:trackingPing"),
   },
   fs: {
     exists: (p) => ipcRenderer.invoke("fs:exists", p),

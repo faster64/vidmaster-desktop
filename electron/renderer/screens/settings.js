@@ -29,32 +29,87 @@ export async function renderSettings(el) {
   });
 }
 
-function renderWorkspaceTab(el, s) {
+async function renderWorkspaceTab(el, s) {
+  const workspaces = await window.api.workspace.list();
+  const active = await window.api.workspace.getActive();
   el.innerHTML = `
-    <div class="field">
-      <label>Workspace</label>
-      <div class="field-row">
-        <input id="ws" type="text" readonly value="${escapeAttr(s.workspace || "")}">
-        <button id="ws-pick">📂 Đổi…</button>
-      </div>
-      <div class="help">Nơi chứa các thư mục input/output mặc định.</div>
+    <div class="help" style="margin-bottom:12px">Mỗi workspace có folder riêng, định danh Telegram riêng, và lastConfig riêng cho từng task.</div>
+    <div id="ws-list">
+      ${workspaces.map((w) => workspaceRowHtml(w, active?.id)).join("")}
     </div>
-    <div class="field">
-      <label>🏷️ Mã định danh</label>
-      <input id="identifier" type="text" value="${escapeAttr(s.tracking?.identifier ?? "")}">
-      <div class="help">Hiện trong tin nhắn Telegram để phân biệt máy / channel. Để trống = fallback theo tên workspace.</div>
-    </div>
+    <button id="ws-add-btn" class="primary" style="margin-top:12px">＋ Thêm workspace</button>
   `;
-  el.querySelector("#ws-pick").addEventListener("click", async () => {
-    const p = await window.api.dialog.pickFolder(s.workspace);
-    if (p) {
-      await window.api.app.ensureWorkspace(p);
-      await window.api.settings.set({ workspace: p });
-      el.querySelector("#ws").value = p;
+
+  el.addEventListener("click", async (e) => {
+    const setBtn = e.target.closest("[data-action='set-active']");
+    if (setBtn) {
+      await window.api.workspace.setActive(setBtn.dataset.id);
+      location.reload();
+      return;
+    }
+    const removeBtn = e.target.closest("[data-action='remove']");
+    if (removeBtn) {
+      const id = removeBtn.dataset.id;
+      const ws = workspaces.find((w) => w.id === id);
+      if (!ws) return;
+      if (!confirm(`Xoá workspace "${ws.identifier || ws.path}"?\n\n(Folder trên disk KHÔNG bị xoá. lastConfig của workspace này sẽ mất.)`)) return;
+      await window.api.workspace.remove(id);
+      location.reload();
+      return;
+    }
+    const openBtn = e.target.closest("[data-action='open']");
+    if (openBtn) {
+      const ws = workspaces.find((w) => w.id === openBtn.dataset.id);
+      if (ws) await window.api.shell.openFolder(ws.path);
     }
   });
-  el.querySelector("#identifier").addEventListener("change", (e) =>
-    window.api.settings.set({ "tracking.identifier": e.target.value.trim() }));
+
+  el.querySelectorAll("input[data-edit='identifier']").forEach((inp) => {
+    inp.addEventListener("change", async (e) => {
+      const id = e.target.dataset.id;
+      await window.api.workspace.update(id, { identifier: e.target.value.trim() });
+    });
+  });
+
+  el.querySelector("#ws-add-btn")?.addEventListener("click", async () => {
+    const path = await window.api.dialog.pickFolder();
+    if (!path) return;
+    const { showPromptModal } = await import("../components/modal.js");
+    const identifier = await showPromptModal({
+      title: "Workspace mới",
+      label: `Mã định danh cho workspace tại:\n${path}`,
+      placeholder: "vd: Channel-A",
+    });
+    if (!identifier) return;
+    try {
+      await window.api.app.ensureWorkspace(path);
+      const ws = await window.api.workspace.create({ path, identifier });
+      await window.api.workspace.setActive(ws.id);
+      await window.api.app.trackingPing();
+      location.reload();
+    } catch (err) {
+      alert(`Lỗi: ${err.message}`);
+    }
+  });
+}
+
+function workspaceRowHtml(w, activeId) {
+  const isActive = w.id === activeId;
+  return `
+    <div class="ws-row ${isActive ? "active" : ""}" data-id="${w.id}">
+      <div class="ws-row-head">
+        <strong>${isActive ? "✓ " : ""}${escapeAttr((w.identifier || "").trim() || w.path.split(/[\\/]/).pop())}</strong>
+        ${isActive ? "<span class='ws-badge'>active</span>" : `<button data-action="set-active" data-id="${w.id}">Đặt làm active</button>`}
+        <button data-action="open" data-id="${w.id}" title="Mở folder">📂</button>
+        <button data-action="remove" data-id="${w.id}" class="danger" title="Xoá workspace khỏi list">🗑</button>
+      </div>
+      <div class="ws-row-path">${escapeAttr(w.path)}</div>
+      <div class="ws-row-id">
+        <label>Định danh:</label>
+        <input type="text" data-edit="identifier" data-id="${w.id}" value="${escapeAttr(w.identifier || "")}">
+      </div>
+    </div>
+  `;
 }
 
 function renderFfmpegTab(el, s) {

@@ -31,6 +31,37 @@ body { margin: 0; font: 14px/1.45 -apple-system, "Segoe UI", system-ui, sans-ser
 .sidebar-footer { margin-top: auto; padding: 12px 16px; border-top: 1px solid var(--border); }
 .sidebar-action { width: 100%; text-align: left; }
 
+.ws-switcher { padding: 0 12px 12px; position: relative; }
+.ws-current {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; background: #f3f4f6; border: 1px solid var(--border); border-radius: 6px;
+  cursor: pointer; font: inherit; text-align: left;
+}
+.ws-current:hover { background: #e5e7eb; }
+.ws-current .ws-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.ws-current .ws-arrow { color: var(--muted); margin-left: 8px; }
+.ws-menu {
+  position: absolute; top: calc(100% - 8px); left: 12px; right: 12px; z-index: 50;
+  background: white; border: 1px solid var(--border); border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12); padding: 4px 0; max-height: 320px; overflow-y: auto;
+}
+.ws-item { padding: 8px 12px; cursor: pointer; user-select: none; }
+.ws-item:hover { background: #f1f5f9; }
+.ws-item.active { font-weight: 600; }
+.ws-item .ws-path { color: var(--muted); font-size: 11px; margin-top: 2px; word-break: break-all; }
+.ws-divider { height: 1px; background: var(--border); margin: 4px 0; }
+.ws-add, .ws-manage { color: var(--accent); font-weight: 600; }
+
+.ws-row { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 8px; }
+.ws-row.active { border-color: var(--accent); background: #eef2ff; }
+.ws-row-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ws-row-head strong { flex: 1; }
+.ws-badge { font-size: 11px; color: var(--accent-fg); background: var(--accent); padding: 2px 8px; border-radius: 10px; }
+.ws-row-path { color: var(--muted); font-size: 12px; word-break: break-all; margin-bottom: 8px; }
+.ws-row-id { display: flex; align-items: center; gap: 8px; }
+.ws-row-id label { font-size: 12px; color: var(--muted); }
+.ws-row-id input { flex: 1; padding: 4px 8px; }
+
 .log-panel { margin-top: 16px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
 .log-panel-header { padding: 8px 12px; background: #f3f4f6; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
 .log-status { color: var(--muted); font-size: 12px; }

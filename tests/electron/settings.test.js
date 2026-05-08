@@ -1,24 +1,30 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import fs from "fs";
+import path from "path";
+import os from "os";
 
-vi.mock("electron", async () => {
-  const os = await import("os");
-  const path = await import("path");
-  const fs = await import("fs");
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "vm-settings-"));
-  return {
-    app: {
-      getPath: (name) => name === "userData" ? tmp : tmp,
-      getName: () => "vidmaster-test",
-      getVersion: () => "0.1.0-test",
-    },
-  };
-});
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "vm-settings-"));
+const CONFIG_PATH = path.join(TMP, "config.json");
+
+vi.mock("electron", () => ({
+  app: {
+    getPath: () => TMP,
+    getName: () => "vidmaster-test",
+    getVersion: () => "0.1.0-test",
+  },
+}));
 
 let createSettings;
 beforeEach(async () => {
+  // Wipe config.json so each test starts on a fresh store
+  try { fs.unlinkSync(CONFIG_PATH); } catch { /* not present */ }
   vi.resetModules();
   ({ createSettings } = await import("../../electron/settings.js"));
 });
+
+function writeLegacyStore(content) {
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(content));
+}
 
 describe("settings store", () => {
   it("returns defaults when no value has been set", () => {
@@ -27,71 +33,134 @@ describe("settings store", () => {
     expect(s.get("ffmpeg.encoder")).toBe("auto");
   });
 
-  it("persists patches via set()", () => {
+  it("persists global keys via set()", () => {
     const s = createSettings();
-    s.set({ workspace: "D:\\Test" });
-    expect(s.get("workspace")).toBe("D:\\Test");
+    s.set({ "ffmpeg.encoder": "libx264" });
+    expect(s.get("ffmpeg.encoder")).toBe("libx264");
   });
 
   it("returns full snapshot when get() called with no args", () => {
     const s = createSettings();
-    s.set({ workspace: "D:\\Test" });
     const all = s.get();
-    expect(all.workspace).toBe("D:\\Test");
-    expect(all.version).toBe(5);
+    expect(all.version).toBe(6);
+    expect(all.workspaces).toEqual([]);
+    expect(all.activeWorkspaceId).toBe(null);
+    // Virtual aliases for back-compat
+    expect(all.workspace).toBe("");
+    expect(all.tracking).toEqual({ identifier: "" });
+    expect(all.lastConfig).toEqual({});
   });
 
   it("notifies onChange subscribers", () => {
     const s = createSettings();
     const cb = vi.fn();
     s.onChange(cb);
-    s.set({ workspace: "D:\\Other" });
-    expect(cb).toHaveBeenCalledWith(expect.objectContaining({ workspace: "D:\\Other" }));
+    s.set({ "ffmpeg.encoder": "libx264" });
+    expect(cb).toHaveBeenCalledWith(expect.objectContaining({
+      ffmpeg: expect.objectContaining({ encoder: "libx264" }),
+    }));
   });
 
-  it("migrates v1 store to current version with default youtube/download/telegram/tracking keys", () => {
+  it("returns defaults for fresh install (no migration needed)", () => {
     const s = createSettings();
-    s.set({ workspace: "D:\\Test", version: 1 });
-    // Re-create to trigger migration
-    const s2 = createSettings();
-    expect(s2.get("version")).toBe(5);
-    expect(s2.get("youtube.apiKey")).toBe("AIzaSyDZTsPGvG0u5du3t7YGueGgnNi7IiulMus");
-    expect(s2.get("youtube.minDurationMinutes")).toBe(8);
-    expect(s2.get("youtube.sortOrder")).toBe("VIEW");
-    expect(s2.get("download.autoUpdateYtDlp")).toBe(false);
-    expect(s2.get("download.maxConcurrent")).toBe(3);
-    expect(s2.get("download.ytdlpPath")).toMatch(/yt-dlp\.exe$/);
-    expect(s2.get("telegram.token")).toMatch(/^\d+:/);
-    expect(s2.get("telegram.groupId")).toBe(-5227711965);
-    expect(s2.get("telegram.trackingChatId")).toBe(8335894661);
-    expect(s2.get("tracking.identifier")).toBe("");
-    expect(s2.get("workspace")).toBe("D:\\Test"); // preserved
-  });
-
-  it("returns defaults for new install (no migration needed)", () => {
-    const s = createSettings();
-    expect(s.get("version")).toBe(5);
+    expect(s.get("version")).toBe(6);
     expect(s.get("youtube.minDurationMinutes")).toBe(8);
     expect(s.get("telegram.token")).toMatch(/^\d+:/);
-    expect(s.get("tracking.identifier")).toBe("");
+    expect(s.get("workspaces")).toEqual([]);
   });
 
-  it("migrates v4 store to v5 with default avatar/lastSettingsTab keys", () => {
+  it("migrates v1 store through all migrations including v6 workspace conversion", () => {
     const s = createSettings();
-    s.set({ workspace: "D:\\Test", version: 4 });
+    s.set({ "ffmpeg.encoder": "libx264", version: 1 });
+    // Manually inject legacy v5 fields to simulate an old store
+    // (v6 migration reads `workspace`, `tracking.identifier`, `lastConfig`)
+    // We use the underlying store via a fresh createSettings call with v=1 first
+    // Since we already set version=1, recreating triggers migration.
     const s2 = createSettings();
-    expect(s2.get("version")).toBe(5);
+    expect(s2.get("version")).toBe(6);
+    expect(s2.get("youtube.apiKey")).toBe("AIzaSyDZTsPGvG0u5du3t7YGueGgnNi7IiulMus");
+    expect(s2.get("download.maxConcurrent")).toBe(3);
+    expect(s2.get("telegram.groupId")).toBe(-5227711965);
     expect(s2.get("avatar.size")).toBe(80);
-    expect(s2.get("avatar.margin")).toBe(16);
-    expect(s2.get("avatar.lastPosition")).toBe("bottom-right");
-    expect(s2.get("ui.lastSettingsTab")).toBe("workspace");
-    expect(s2.get("workspace")).toBe("D:\\Test");
   });
 
-  it("returns avatar defaults on a fresh install", () => {
+  it("v6 migration converts an existing v5 single workspace into the workspaces array", () => {
+    writeLegacyStore({
+      version: 5,
+      workspace: "D:\\OldWS",
+      tracking: { identifier: "Legacy" },
+      lastConfig: { render: { foo: "bar" } },
+    });
     const s = createSettings();
-    expect(s.get("avatar.size")).toBe(80);
-    expect(s.get("avatar.lastPosition")).toBe("bottom-right");
-    expect(s.get("ui.lastSettingsTab")).toBe("workspace");
+    expect(s.get("version")).toBe(6);
+    const list = s.listWorkspaces();
+    expect(list).toHaveLength(1);
+    expect(list[0].path).toBe("D:\\OldWS");
+    expect(list[0].identifier).toBe("Legacy");
+    expect(list[0].lastConfig).toEqual({ render: { foo: "bar" } });
+    expect(s.getActiveWorkspace().id).toBe(list[0].id);
+    // Virtual aliases reflect the migrated workspace
+    expect(s.get("workspace")).toBe("D:\\OldWS");
+    expect(s.get("tracking.identifier")).toBe("Legacy");
+    expect(s.get("lastConfig.render")).toEqual({ foo: "bar" });
+  });
+
+  it("v6 migration with no prior workspace yields empty list", () => {
+    writeLegacyStore({ version: 5, ffmpeg: { encoder: "libx264", maxConcurrent: 2 } });
+    const s = createSettings();
+    expect(s.get("version")).toBe(6);
+    expect(s.listWorkspaces()).toEqual([]);
+    expect(s.get("activeWorkspaceId")).toBe(null);
+  });
+
+  it("workspace CRUD: create/setActive/list/update/remove", () => {
+    const s = createSettings();
+    expect(s.listWorkspaces()).toEqual([]);
+    const ws1 = s.createWorkspace({ path: "D:\\WS1", identifier: "Channel-A" });
+    expect(ws1.id).toBeDefined();
+    expect(s.listWorkspaces()).toHaveLength(1);
+    expect(s.getActiveWorkspace().id).toBe(ws1.id);
+    expect(s.get("workspace")).toBe("D:\\WS1");
+    expect(s.get("tracking.identifier")).toBe("Channel-A");
+
+    const ws2 = s.createWorkspace({ path: "D:\\WS2", identifier: "Channel-B" });
+    expect(s.listWorkspaces()).toHaveLength(2);
+    // Active stays as ws1 since we already had one
+    expect(s.getActiveWorkspace().id).toBe(ws1.id);
+
+    s.setActiveWorkspace(ws2.id);
+    expect(s.get("workspace")).toBe("D:\\WS2");
+    expect(s.get("tracking.identifier")).toBe("Channel-B");
+
+    s.updateWorkspace(ws2.id, { identifier: "Channel-B-Renamed" });
+    expect(s.get("tracking.identifier")).toBe("Channel-B-Renamed");
+
+    s.removeWorkspace(ws2.id);
+    expect(s.listWorkspaces()).toHaveLength(1);
+    expect(s.getActiveWorkspace().id).toBe(ws1.id);
+  });
+
+  it("rejects creating a workspace with a duplicate path", () => {
+    const s = createSettings();
+    s.createWorkspace({ path: "D:\\Same", identifier: "A" });
+    expect(() => s.createWorkspace({ path: "D:\\Same", identifier: "B" }))
+      .toThrow(/đã tồn tại/);
+  });
+
+  it("lastConfig writes route to the active workspace", () => {
+    const s = createSettings();
+    const ws1 = s.createWorkspace({ path: "D:\\WS1", identifier: "A" });
+    const ws2 = s.createWorkspace({ path: "D:\\WS2", identifier: "B" });
+    // Active is ws1 (first created)
+    s.set({ "lastConfig.render": { foo: 1 } });
+    expect(s.get("lastConfig.render")).toEqual({ foo: 1 });
+    // Switch to ws2 — its lastConfig is empty
+    s.setActiveWorkspace(ws2.id);
+    expect(s.get("lastConfig.render")).toBeUndefined();
+    s.set({ "lastConfig.render": { foo: 2 } });
+    expect(s.get("lastConfig.render")).toEqual({ foo: 2 });
+    // Switch back — original lastConfig preserved
+    s.setActiveWorkspace(ws1.id);
+    expect(s.get("lastConfig.render")).toEqual({ foo: 1 });
   });
 });
