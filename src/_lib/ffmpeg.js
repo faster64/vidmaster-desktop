@@ -1,4 +1,4 @@
-import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg";
+import { ffmpegPath } from "./ffmpegBin.js";
 import { spawn } from "child_process";
 import { AbortError } from "./abortError.js";
 

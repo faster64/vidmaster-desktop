@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg";
+import { ffmpegPath } from "./_lib/ffmpegBin.js";
 import { TaskRunner } from "./_lib/runner.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath);

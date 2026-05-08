@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
 import pLimit from "p-limit";
-import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg";
+import { ffmpegPath } from "../../src/_lib/ffmpegBin.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 

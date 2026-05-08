@@ -1,4 +1,4 @@
-import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg";
+import { ffmpegPath } from "../src/_lib/ffmpegBin.js";
 import { spawn } from "child_process";
 
 const PRIORITY = ["h264_nvenc", "h264_qsv", "h264_amf", "libx264"];

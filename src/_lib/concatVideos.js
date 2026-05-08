@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
-import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg";
+import { ffmpegPath } from "./ffmpegBin.js";
 import ffmpeg from "fluent-ffmpeg";
 import { AbortError } from "./abortError.js";
 

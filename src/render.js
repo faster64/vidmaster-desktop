@@ -1,4 +1,4 @@
-import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg";
+import { ffmpegPath } from "./_lib/ffmpegBin.js";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
 import path from "path";
