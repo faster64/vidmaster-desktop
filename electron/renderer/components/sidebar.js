@@ -1,17 +1,21 @@
 const NAV_ITEMS = [
-  { group: "Tasks", items: [
-    { id: "render",   icon: "🎬", label: "Render Video" },
-    { id: "cutBg",    icon: "🎞️", label: "Chia nhỏ video nền" },
-    { id: "trimEnds", icon: "😘", label: "Cắt đầu/cuối" },
-    { id: "concatHeadTail", icon: "😍", label: "Nối đầu/cuối" },
-    { id: "getUrls",  icon: "🔗", label: "Lấy link kênh" },
-    { id: "download", icon: "⬇️", label: "Tải video" },
-    { id: "thumbAvatar", icon: "🪪", label: "Gắn avatar vào thumbnail" },
-  ]},
-  { group: "Hệ thống", items: [
-    { id: "queue",    icon: "📋", label: "Hàng đợi" },
-    { id: "settings", icon: "⚙️", label: "Cài đặt" },
-  ]},
+  {
+    group: "Tasks", items: [
+      { id: "render", icon: "🤩", label: "Render Video" },
+      { id: "cutBg", icon: "😋", label: "Chia nhỏ video nền" },
+      { id: "trimEnds", icon: "😘", label: "Cắt đầu/cuối" },
+      { id: "concatHeadTail", icon: "😍", label: "Nối đầu/cuối" },
+      { id: "thumbAvatar", icon: "😂", label: "Gắn avatar vào thumbnail" },
+      { id: "getUrls", icon: "😅", label: "Lấy link kênh" },
+      { id: "download", icon: "🤣", label: "Tải video" },
+    ]
+  },
+  {
+    group: "Hệ thống", items: [
+      { id: "queue", icon: "📋", label: "Hàng đợi" },
+      { id: "settings", icon: "⚙️", label: "Cài đặt" },
+    ]
+  },
 ];
 
 export function mountSidebar(el, onNavigate) {

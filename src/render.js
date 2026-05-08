@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { TaskRunner } from "./_lib/runner.js";
+import { concatVideos } from "./_lib/concatVideos.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -31,29 +32,32 @@ const getFilesFromFolder = (folder, fileTypes = [".mp4"]) => {
     .map((file) => path.join(folder, file));
 };
 
-const readChromaKeyColors = (chromaKeyFile, color, runner) => {
+// Strict pre-render validator. Throws on any problem so the user fixes content
+// before the queue spends minutes/hours rendering with bad colors.
+export const validateChromaKeyFile = (chromaKeyFile) => {
+  if (!fs.existsSync(chromaKeyFile)) {
+    throw new Error(`Không tìm thấy file chromaKey: ${chromaKeyFile}`);
+  }
+  const content = fs.readFileSync(chromaKeyFile, "utf-8");
+  const lines = content.split(/\r?\n/);
   const colors = [];
-  try {
-    if (fs.existsSync(chromaKeyFile)) {
-      const content = fs.readFileSync(chromaKeyFile, "utf-8");
-      const lines = content
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith("#"));
-
-      for (const line of lines) {
-        if (/^[0-9A-Fa-f]{6}$/.test(line)) {
-          colors.push(line);
-        } else {
-          runner.log("warn", `Invalid chroma key color format in file ${chromaKeyFile}: ${line}`);
-        }
-      }
-      runner.log("info", `Read ${colors.length} chroma key colors from file ${chromaKeyFile}`);
+  const invalid = [];
+  lines.forEach((rawLine, idx) => {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) return;
+    if (/^[0-9A-Fa-f]{6}$/.test(line)) {
+      colors.push(line);
     } else {
-      runner.log("info", `File ${chromaKeyFile} not found, will use default color: #${color}`);
+      invalid.push({ lineNumber: idx + 1, content: line });
     }
-  } catch (error) {
-    runner.log("error", `Error reading chroma key file ${chromaKeyFile}: ${error.message}`);
+  });
+  if (invalid.length > 0) {
+    const head = invalid.slice(0, 5).map((e) => `dòng ${e.lineNumber}: "${e.content}"`).join("; ");
+    const more = invalid.length > 5 ? ` (và ${invalid.length - 5} dòng khác)` : "";
+    throw new Error(`File chromaKey.txt có ${invalid.length} dòng không hợp lệ — mỗi dòng cần đúng 6 ký tự hex (0-9A-F), không có dấu # ở đầu, không có ký tự khác: ${head}${more}`);
+  }
+  if (colors.length === 0) {
+    throw new Error(`File chromaKey.txt không có color hợp lệ nào (chỉ có comment và dòng trống): ${chromaKeyFile}`);
   }
   return colors;
 };
@@ -311,6 +315,8 @@ export async function runRender(config) {
 
   const overlayFolder = inputs.overlays;
   const backgroundFolder = inputs.backgrounds;
+  const headFolderRoot = inputs.headFolder || null;
+  const tailFolderRoot = inputs.tailFolder || null;
 
   const useGPU = ffmpegConfig.useGPU || false;
   const gpuVideoCodec = ffmpegConfig.encoder || "libx264";
@@ -343,10 +349,12 @@ export async function runRender(config) {
 
   const overlayFiles = getFilesFromFolder(overlayFolder);
 
-  // Read chroma key colors from file if configured
-  const chromaKeyColors = chromaKeyFile
-    ? readChromaKeyColors(chromaKeyFile, chromaColor, runner)
-    : [];
+  // Validate + read chroma key colors from file (strict; throws if path set but content invalid)
+  let chromaKeyColors = [];
+  if (chromaKeyFile) {
+    chromaKeyColors = validateChromaKeyFile(chromaKeyFile);
+    runner.log("info", `Read ${chromaKeyColors.length} chroma key colors from file ${chromaKeyFile}`);
+  }
 
   const startTime = Date.now();
 
@@ -459,11 +467,22 @@ export async function runRender(config) {
       continue;
     }
 
-    const tasks = folderPicks.map((overlayBase) => {
+    // Optional head/tail per channel (sub-folder named like the background folder)
+    const headFiles = listChannelClips(headFolderRoot, folderName);
+    const tailFiles = listChannelClips(tailFolderRoot, folderName);
+    if ((headFolderRoot || tailFolderRoot) && (headFiles.length || tailFiles.length)) {
+      runner.log("info", `Channel ${folderName}: head=${headFiles.length} tail=${tailFiles.length}`);
+    } else if (headFolderRoot || tailFolderRoot) {
+      runner.log("info", `Channel ${folderName}: no head/tail (skip concat for this channel)`);
+    }
+
+    const tasks = folderPicks.map((overlayBase, j) => {
       const overlay = overlayBaseByName.get(overlayBase);
       const background = backgroundFiles[Math.floor(Math.random() * totalBackgroundsForFolder)];
       const outputPath = path.join(groupFolder, `${overlayBase}.mp4`);
-      return { overlay, background, outputPath, overlayBase };
+      const head = headFiles.length ? headFiles[j % headFiles.length] : null;
+      const tail = tailFiles.length ? tailFiles[j % tailFiles.length] : null;
+      return { overlay, background, outputPath, overlayBase, head, tail };
     });
 
     // Process in parallel batches; on success add to histSet
@@ -472,7 +491,8 @@ export async function runRender(config) {
       const batch = tasks.slice(k, k + maxConcurrentProcesses);
       await Promise.all(batch.map((task) =>
         processVideo(task.overlay, task.background, task.outputPath, videoCfg)
-          .then((outPath) => {
+          .then(async (outPath) => {
+            await maybeConcatInPlace(outPath, task.head, task.tail, runner, config.signal);
             processedVideos++;
             runner.setProgress(Math.round((processedVideos / totalVideosToProcess) * 100), "");
             outputs.push(outPath);
@@ -503,4 +523,32 @@ export async function runRender(config) {
   runner.setProgress(100, "Render done");
 
   return { ok: errors.length === 0, outputs, errors };
+}
+
+// ================= head/tail concat helpers =================
+
+function listChannelClips(rootFolder, channelName) {
+  if (!rootFolder) return [];
+  const channelFolder = path.join(rootFolder, channelName);
+  if (!fs.existsSync(channelFolder)) return [];
+  return getFilesFromFolder(channelFolder);
+}
+
+async function maybeConcatInPlace(renderedPath, headFile, tailFile, runner, signal) {
+  if (!headFile && !tailFile) return;
+  const inputs = [headFile, renderedPath, tailFile].filter(Boolean);
+  if (inputs.length < 2) return;
+  const tmpPath = `${renderedPath}.concat.tmp.mp4`;
+  const baseName = path.basename(renderedPath);
+  try {
+    runner.log("info", `Concat ${baseName} ← ${inputs.map((p) => path.basename(p)).join(" + ")}`);
+    await concatVideos({ inputs, output: tmpPath, signal, runner, message: `Nối: ${baseName}` });
+    fs.rmSync(renderedPath, { force: true });
+    fs.renameSync(tmpPath, renderedPath);
+    runner.log("info", `Concat done: ${baseName}`);
+  } catch (err) {
+    fs.rmSync(tmpPath, { force: true });
+    if (err.name === "AbortError") throw err;
+    runner.log("error", `Concat failed for ${baseName}: ${err.message} (giữ bare render)`);
+  }
 }

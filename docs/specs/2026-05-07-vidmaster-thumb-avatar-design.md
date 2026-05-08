@@ -156,20 +156,20 @@ Throttling per existing `TaskRunner` (default 500 ms).
 ### 4.1 Sidebar (current state on master + new item)
 
 Existing 6 task items on master:
-- 🎬 Render Video
-- 🎞️ Chia nhỏ video nền (cutBg)
+- 🤩 Render Video
+- 😋 Chia nhỏ video nền (cutBg)
 - 😘 Cắt đầu/cuối (trimEnds)
 - 😍 Nối đầu/cuối (concatHeadTail)
-- 🔗 Lấy link kênh (getUrls)
-- ⬇️ Tải video (download)
+- 😅 Lấy link kênh (getUrls)
+- 🤣 Tải video (download)
 
 Add as 7th item:
-- 🪪 Gắn avatar vào thumbnail (thumbAvatar)
+- 😂 Gắn avatar vào thumbnail (thumbAvatar)
 
 ### 4.2 Form
 
 ```
-🪪  Gắn avatar vào thumbnail
+😂  Gắn avatar vào thumbnail
  ──────────────────────────────────────
  📁 Folder thumbnail (.jpg)   [📂 …\thumbs ]
  📁 Folder avatar (.jpg/.png) [📂 …\avatars]

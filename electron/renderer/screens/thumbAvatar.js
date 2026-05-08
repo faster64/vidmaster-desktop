@@ -19,7 +19,7 @@ export async function renderThumbAvatar(el) {
   const size = s.avatar?.size ?? 80;
 
   el.innerHTML = `
-    <div class="screen-header">🪪 Gắn avatar vào thumbnail</div>
+    <div class="screen-header">😂 Gắn avatar vào thumbnail</div>
     <p class="screen-subtitle">Mỗi avatar sinh ra 1 folder chứa các thumbnail đã chèn avatar đó.</p>
     <form id="task-form">
       <div class="field">

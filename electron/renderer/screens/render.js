@@ -16,6 +16,8 @@ export async function renderRender(el) {
     inputs: {
       overlays: `${ws}\\overlays`,
       backgrounds: `${ws}\\backgrounds`,
+      headFolder: "",
+      tailFolder: "",
     },
     output: `${ws}\\done`,
     videosPerFolder: 5,
@@ -54,6 +56,14 @@ export async function renderRender(el) {
   const advanced = [
     { type: "checkbox", path: "ffmpeg.useGPU", label: "Dùng GPU (NVIDIA/Intel/AMD)" },
     { type: "number", path: "opacity", label: "Opacity (0–1)", min: 0, max: 1, step: "any", default: 0.7 },
+    {
+      type: "folder", path: "inputs.headFolder", label: "Folder nối đầu (optional)", mustExist: "folder",
+      help: ""
+    },
+    {
+      type: "folder", path: "inputs.tailFolder", label: "Folder nối cuối (optional)", mustExist: "folder",
+      help: ""
+    },
   ];
 
   el.innerHTML = taskFormShell({

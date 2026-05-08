@@ -1,6 +1,6 @@
 export async function runWithFeedback(button, asyncFn, opts = {}) {
   const {
-    spinnerMs = 1000,
+    spinnerMs = 2000,
     okMs = 1000,
     okHtml = "✅ OK",
     spinnerHtml = '<span class="btn-spinner"></span>',
@@ -16,8 +16,8 @@ export async function runWithFeedback(button, asyncFn, opts = {}) {
       asyncFn(),
       new Promise((r) => setTimeout(r, spinnerMs)),
     ]);
-    button.innerHTML = okHtml;
-    await new Promise((r) => setTimeout(r, okMs));
+    // button.innerHTML = okHtml;
+    // await new Promise((r) => setTimeout(r, okMs));
     return result;
   } finally {
     button.innerHTML = originalHtml;
