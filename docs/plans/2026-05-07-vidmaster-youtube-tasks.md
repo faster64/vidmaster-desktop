@@ -2400,7 +2400,6 @@ Insert these blocks **before** the `<h3>Log</h3>` heading in the `el.innerHTML` 
         <input id="yt-key" type="password" value="${escape(s.youtube.apiKey)}">
         <button type="button" id="yt-key-show">👁</button>
       </div>
-      <div class="help">Default từ project tham chiếu. Tạo key riêng tại console.cloud.google.com nếu hết quota.</div>
     </div>
     <div class="field">
       <label>Min duration (phút)</label>

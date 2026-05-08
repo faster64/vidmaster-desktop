@@ -661,7 +661,6 @@ export async function renderSettings(el) {
 
   el.innerHTML = `
     <div class="screen-header">⚙️ Cài đặt</div>
-    <p class="screen-subtitle">Cấu hình mặc định cho mọi task. Có thể override per-task khi cần.</p>
     <div id="settings-tabs"></div>
   `;
 
@@ -760,7 +759,6 @@ function renderYoutubeTab(el, s) {
         <input id="yt-key" type="password" value="${escapeAttr(s.youtube.apiKey)}">
         <button type="button" id="yt-key-show">👁</button>
       </div>
-      <div class="help">Default từ project tham chiếu. Tạo key riêng tại console.cloud.google.com nếu hết quota.</div>
     </div>
     <div class="field">
       <label>Min duration (phút)</label>

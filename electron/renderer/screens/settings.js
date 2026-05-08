@@ -6,7 +6,6 @@ export async function renderSettings(el) {
 
   el.innerHTML = `
     <div class="screen-header">⚙️ Cài đặt</div>
-    <p class="screen-subtitle">Cấu hình mặc định cho mọi task. Có thể override per-task khi cần.</p>
     <div id="settings-tabs"></div>
   `;
 
@@ -33,7 +32,6 @@ async function renderWorkspaceTab(el, s) {
   const workspaces = await window.api.workspace.list();
   const active = await window.api.workspace.getActive();
   el.innerHTML = `
-    <div class="help" style="margin-bottom:12px">Mỗi workspace có folder riêng, định danh Telegram riêng, và lastConfig riêng cho từng task.</div>
     <div id="ws-list">
       ${workspaces.map((w) => workspaceRowHtml(w, active?.id)).join("")}
     </div>
@@ -160,7 +158,6 @@ function renderYoutubeTab(el, s) {
         <input id="yt-key" type="password" value="${escapeAttr(s.youtube.apiKey)}">
         <button type="button" id="yt-key-show">👁</button>
       </div>
-      <div class="help">Default từ project tham chiếu. Tạo key riêng tại console.cloud.google.com nếu hết quota.</div>
     </div>
     <div class="field">
       <label>Min duration (phút)</label>
@@ -259,7 +256,6 @@ function renderTelegramTab(el, s) {
         <input id="tg-tracking" type="number" value="${s.telegram?.trackingChatId ?? ""}">
       </div>
     </div>
-    <div class="help">Nhấn Ctrl+Q để hiện/ẩn Group ID và Tracking chat ID.</div>
   `;
   el.querySelector("#tg-token").addEventListener("change", (e) =>
     window.api.settings.set({ "telegram.token": e.target.value }));

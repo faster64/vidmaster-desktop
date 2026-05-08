@@ -27,6 +27,7 @@ export async function renderThumbAvatar(el) {
         <div class="field-row">
           <input id="thumb-dir" type="text" value="${escapeAttr(lastThumb)}" required>
           <button type="button" id="pick-thumb">📂 Chọn…</button>
+          <button type="button" data-open-id="thumb-dir" title="Mở folder">↗</button>
         </div>
       </div>
       <div class="field">
@@ -34,6 +35,7 @@ export async function renderThumbAvatar(el) {
         <div class="field-row">
           <input id="avatar-dir" type="text" value="${escapeAttr(lastAvatar)}" required>
           <button type="button" id="pick-avatar">📂 Chọn…</button>
+          <button type="button" data-open-id="avatar-dir" title="Mở folder">↗</button>
         </div>
       </div>
       <div class="field">
@@ -41,6 +43,7 @@ export async function renderThumbAvatar(el) {
         <div class="field-row">
           <input id="output" type="text" value="${escapeAttr(lastOutput)}" required>
           <button type="button" id="pick-output">📂 Chọn…</button>
+          <button type="button" data-open-id="output" title="Mở folder">↗</button>
         </div>
       </div>
       <div class="field">
@@ -70,6 +73,12 @@ export async function renderThumbAvatar(el) {
     const cur = el.querySelector("#output").value;
     const p = await window.api.dialog.pickFolder(cur);
     if (p) el.querySelector("#output").value = p;
+  });
+  el.querySelectorAll("[data-open-id]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const value = el.querySelector(`#${btn.dataset.openId}`)?.value?.trim();
+      if (value) await window.api.shell.openFolder(value);
+    });
   });
 
   el.querySelector("#task-form").addEventListener("submit", async (e) => {

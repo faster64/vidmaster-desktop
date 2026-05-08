@@ -1720,7 +1720,6 @@ export async function renderSettings(el) {
 
   el.innerHTML = `
     <div class="screen-header">⚙️ Cài đặt</div>
-    <p class="screen-subtitle">Cấu hình mặc định cho mọi task. Có thể override per-task khi cần.</p>
 
     <div class="field">
       <label>Workspace</label>
