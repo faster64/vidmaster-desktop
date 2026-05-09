@@ -2039,7 +2039,7 @@ export async function renderGetUrls(el) {
       <div class="field">
         <div class="help">ⓘ Min duration: <strong>${s.youtube.minDurationMinutes}</strong> phút · Sort: <strong>${s.youtube.sortOrder}</strong> (đổi trong Settings → YouTube)</div>
       </div>
-      <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary">▶  Thực hiện</button>
     </form>
     <div id="viewer" style="margin-top:24px"></div>
   `;
@@ -2153,7 +2153,7 @@ export async function renderDownload(el) {
         <input id="concurrent" type="range" min="1" max="5" value="${lastConcurrent}">
         <div class="help">Default từ Settings · range 1–5.</div>
       </div>
-      <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary">▶  Thực hiện</button>
     </form>
   `;
 
@@ -2249,7 +2249,7 @@ export async function renderConcat(el) {
         <div class="help" id="output-preview"></div>
       </div>
 
-      <button type="submit" class="primary" id="submit" disabled>▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary" id="submit" disabled>▶  Thực hiện</button>
     </form>
   `;
 

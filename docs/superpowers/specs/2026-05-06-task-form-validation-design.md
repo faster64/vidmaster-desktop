@@ -5,7 +5,7 @@
 
 ## Problem
 
-When a user clicks "Thêm vào hàng đợi" with missing/invalid input, the form silently does nothing. Two failure modes:
+When a user clicks " Thực hiện" with missing/invalid input, the form silently does nothing. Two failure modes:
 
 1. **HTML5 validation on hidden field** — invalid fields inside collapsed `<details>` cause "An invalid form control with name='X' is not focusable", swallowed silently. (Already partially mitigated by setting `step="any"` on `opacity`, but the class of bug remains.)
 2. **No path-existence check** — user can type/paste a non-existent folder; task gets queued and crashes minutes later when the runner tries to read it.

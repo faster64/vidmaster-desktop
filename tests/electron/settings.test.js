@@ -42,7 +42,7 @@ describe("settings store", () => {
   it("returns full snapshot when get() called with no args", () => {
     const s = createSettings();
     const all = s.get();
-    expect(all.version).toBe(7);
+    expect(all.version).toBe(8);
     expect(all.workspaces).toEqual([]);
     expect(all.activeWorkspaceId).toBe(null);
     // Virtual aliases for back-compat
@@ -63,7 +63,7 @@ describe("settings store", () => {
 
   it("returns defaults for fresh install (no migration needed)", () => {
     const s = createSettings();
-    expect(s.get("version")).toBe(7);
+    expect(s.get("version")).toBe(8);
     expect(s.get("youtube.minDurationMinutes")).toBe(8);
     expect(s.get("telegram.token")).toMatch(/^\d+:/);
     expect(s.get("workspaces")).toEqual([]);
@@ -77,7 +77,7 @@ describe("settings store", () => {
     // We use the underlying store via a fresh createSettings call with v=1 first
     // Since we already set version=1, recreating triggers migration.
     const s2 = createSettings();
-    expect(s2.get("version")).toBe(7);
+    expect(s2.get("version")).toBe(8);
     expect(s2.get("youtube.apiKey")).toBe("AIzaSyDZTsPGvG0u5du3t7YGueGgnNi7IiulMus");
     expect(s2.get("download.maxConcurrent")).toBe(3);
     expect(s2.get("telegram.groupId")).toBe(-5227711965);
@@ -92,7 +92,7 @@ describe("settings store", () => {
       lastConfig: { render: { foo: "bar" } },
     });
     const s = createSettings();
-    expect(s.get("version")).toBe(7);
+    expect(s.get("version")).toBe(8);
     const list = s.listWorkspaces();
     expect(list).toHaveLength(1);
     expect(list[0].path).toBe("D:\\OldWS");
@@ -108,20 +108,22 @@ describe("settings store", () => {
   it("v6 migration with no prior workspace yields empty list", () => {
     writeLegacyStore({ version: 5, ffmpeg: { encoder: "libx264", maxConcurrent: 2 } });
     const s = createSettings();
-    expect(s.get("version")).toBe(7);
+    expect(s.get("version")).toBe(8);
     expect(s.listWorkspaces()).toEqual([]);
     expect(s.get("activeWorkspaceId")).toBe(null);
   });
 
-  it("v7 migration adds gemini and trendSearch defaults from a legacy v6 store", () => {
+  it("v6 → v8 migration adds ai and trendSearch defaults from a legacy v6 store", () => {
     writeLegacyStore({
       version: 6,
       workspaces: [],
       activeWorkspaceId: null,
     });
     const s = createSettings();
-    expect(s.get("version")).toBe(7);
-    expect(s.get("gemini.apiKeys")).toEqual([]);
+    expect(s.get("version")).toBe(8);
+    expect(s.get("ai.provider")).toBe("groq");
+    expect(s.get("ai.apiKeys")).toEqual([]);
+    expect(s.get("ai.model")).toBe("llama-3.1-70b-versatile");
     expect(s.get("trendSearch.regionCode")).toBe("VN");
     expect(s.get("trendSearch.relevanceLanguage")).toBe("vi");
     expect(s.get("trendSearch.timeWindowDays")).toBe(7);
@@ -130,9 +132,25 @@ describe("settings store", () => {
     expect(s.get("trendSearch.analyzeTopN")).toBe(10);
   });
 
-  it("fresh install yields v7 with gemini and trendSearch defaults", () => {
+  it("v7 → v8 migration drops gemini and adds ai defaults", () => {
+    writeLegacyStore({
+      version: 7,
+      workspaces: [],
+      activeWorkspaceId: null,
+      gemini: { apiKeys: ["AIzaOLD"] },
+    });
     const s = createSettings();
-    expect(s.get("gemini.apiKeys")).toEqual([]);
+    expect(s.get("version")).toBe(8);
+    expect(s.get("ai.provider")).toBe("groq");
+    expect(s.get("ai.apiKeys")).toEqual([]);
+    expect(s.get("gemini")).toBeUndefined();
+  });
+
+  it("fresh install yields v8 with ai and trendSearch defaults", () => {
+    const s = createSettings();
+    expect(s.get("ai.provider")).toBe("groq");
+    expect(s.get("ai.apiKeys")).toEqual([]);
+    expect(s.get("ai.model")).toBe("llama-3.1-70b-versatile");
     expect(s.get("trendSearch.sortBy")).toBe("velocity");
     expect(s.get("trendSearch.analyzeTopN")).toBe(10);
   });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { runWithFeedback } from "../../electron/renderer/components/buttonFeedback.js";
 
-function makeButton(initial = { innerHTML: "▶ Thêm vào hàng đợi", disabled: false }) {
+function makeButton(initial = { innerHTML: "▶  Thực hiện", disabled: false }) {
   return { ...initial };
 }
 
@@ -13,9 +13,9 @@ describe("runWithFeedback", () => {
   });
 
   it("restores original innerHTML and disabled after completion", async () => {
-    const btn = makeButton({ innerHTML: "▶ Thêm vào hàng đợi", disabled: false });
+    const btn = makeButton({ innerHTML: "▶  Thực hiện", disabled: false });
     await runWithFeedback(btn, async () => {}, { spinnerMs: 5, okMs: 5 });
-    expect(btn.innerHTML).toBe("▶ Thêm vào hàng đợi");
+    expect(btn.innerHTML).toBe("▶  Thực hiện");
     expect(btn.disabled).toBe(false);
   });
 

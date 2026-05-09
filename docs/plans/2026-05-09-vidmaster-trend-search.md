@@ -1040,7 +1040,7 @@ export async function renderTrendSearch(el) {
           <input id="topN" type="number" min="0" max="50" value="${cfg.analyzeTopN ?? 10}">
         </div>
       </div>
-      <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary">▶  Thực hiện</button>
     </form>
     <div id="trend-banner" style="margin-top:12px"></div>
     <div id="trend-result" style="margin-top:24px"></div>
