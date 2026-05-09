@@ -373,34 +373,55 @@ function escapeAttr(s) {
   return String(s ?? "").replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
 }
 
+const GROQ_MODELS = [
+  { value: "llama-3.1-70b-versatile", label: "llama-3.1-70b-versatile (default, mạnh nhất)" },
+  { value: "llama-3.1-8b-instant", label: "llama-3.1-8b-instant (nhanh nhất)" },
+  { value: "llama-3.3-70b-versatile", label: "llama-3.3-70b-versatile" },
+  { value: "mixtral-8x7b-32768", label: "mixtral-8x7b-32768 (context dài)" },
+];
+
 function renderAiTab(el, s) {
-  const keys = s.gemini?.apiKeys || [];
+  const keys = s.ai?.apiKeys || [];
+  const currentModel = s.ai?.model || "llama-3.1-70b-versatile";
+  const modelOptions = GROQ_MODELS.map((m) =>
+    `<option value="${escapeAttr(m.value)}" ${m.value === currentModel ? "selected" : ""}>${escapeAttr(m.label)}</option>`,
+  ).join("");
   el.innerHTML = `
-    <h3>Gemini API keys</h3>
-    <p style="color:#666">Free tier: 1500 req/key/day. Có thể thêm nhiều key — VidMaster sẽ round-robin và tự cooldown khi 429.</p>
+    <h3>Provider: Groq (free, không billing)</h3>
+    <p style="color:#666">Lấy key từ <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>. Free tier rất rộng (~14,400 req/ngày), không cần thẻ tín dụng.</p>
+
+    <h3>Model</h3>
+    <select id="ai-model" style="margin-bottom:16px;min-width:340px">${modelOptions}</select>
+
+    <h3>API keys</h3>
+    <p style="color:#666">Thêm nhiều key để round-robin khi gặp 429.</p>
     <div id="ai-keys">
       ${keys.map((k, i) => keyRow(k, i)).join("")}
     </div>
     <div style="margin-top:8px;display:flex;gap:8px">
-      <input id="ai-new-key" type="text" placeholder="AIza..." style="flex:1">
+      <input id="ai-new-key" type="text" placeholder="gsk_..." style="flex:1">
       <button id="ai-add">+ Thêm</button>
     </div>
   `;
+
+  el.querySelector("#ai-model").addEventListener("change", async (e) => {
+    await window.api.settings.set({ ai: { ...(s.ai || {}), model: e.target.value } });
+  });
 
   el.querySelector("#ai-add").addEventListener("click", async () => {
     const input = el.querySelector("#ai-new-key");
     const v = input.value.trim();
     if (!v) return;
-    const next = [...(s.gemini?.apiKeys || []), v];
-    await window.api.settings.set({ gemini: { apiKeys: next } });
+    const next = [...(s.ai?.apiKeys || []), v];
+    await window.api.settings.set({ ai: { ...(s.ai || {}), apiKeys: next } });
     location.reload();
   });
 
   el.querySelectorAll(".ai-rm").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const idx = parseInt(btn.dataset.i, 10);
-      const next = (s.gemini?.apiKeys || []).filter((_, i) => i !== idx);
-      await window.api.settings.set({ gemini: { apiKeys: next } });
+      const next = (s.ai?.apiKeys || []).filter((_, i) => i !== idx);
+      await window.api.settings.set({ ai: { ...(s.ai || {}), apiKeys: next } });
       location.reload();
     });
   });

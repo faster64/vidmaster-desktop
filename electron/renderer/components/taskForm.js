@@ -13,7 +13,7 @@ export function taskFormShell({ icon, title, description, fields, advanced, task
           <summary>Tuỳ chọn nâng cao</summary>
           ${advanced.map((f) => fieldHtml(f, lastConfig, defaults)).join("")}
         </details>` : ""}
-      <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary">▶  Thực hiện</button>
       <button type="button" id="task-reset" style="margin-left:8px">Reset mặc định</button>
     </form>
   `;

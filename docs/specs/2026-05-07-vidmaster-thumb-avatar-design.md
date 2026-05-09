@@ -182,7 +182,7 @@ Add as 7th item:
 
  ⓘ Avatar size: 80×80 px (đổi trong Settings → Avatar)
 
-       [ ▶ Thêm vào hàng đợi ]
+       [ ▶  Thực hiện ]
 ```
 
 - Default `position` = `avatar.lastPosition` from settings (default `"bottom-right"`).

@@ -152,7 +152,7 @@ async function runX({ /* per-task config */, signal, onProgress, onLog }) {
 │   🎨 ChromaKey color  [#D4F9D7] [▢]     │
 │   ⏲️ Opacity  [────●────] 70%           │
 │                                          │
-│            [ ▶ Thêm vào hàng đợi ]      │
+│            [ ▶  Thực hiện ]      │
 └──────────────────────────────────────────┘
 ```
 - Defaults pre-filled from workspace + settings + last-used config.

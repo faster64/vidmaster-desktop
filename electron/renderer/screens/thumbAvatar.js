@@ -55,7 +55,7 @@ export async function renderThumbAvatar(el) {
         </div>
         <div class="help">Avatar size: <strong>${size}×${size} px</strong> (đổi trong Settings → Avatar)</div>
       </div>
-      <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary">▶  Thực hiện</button>
     </form>
   `;
 

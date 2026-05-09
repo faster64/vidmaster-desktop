@@ -33,7 +33,7 @@ export async function renderDownload(el) {
         <input id="concurrent" type="range" min="1" max="5" value="${lastConcurrent}">
         <div class="help">Default từ Settings · range 1–5.</div>
       </div>
-      <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary">▶  Thực hiện</button>
     </form>
   `;
 

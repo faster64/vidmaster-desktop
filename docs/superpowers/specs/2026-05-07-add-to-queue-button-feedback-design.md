@@ -6,7 +6,7 @@
 
 ## Problem
 
-Khi người dùng bấm nút **▶ Thêm vào hàng đợi** ở các màn task, phản hồi duy nhất hiện tại là một toast trượt vào góc phải. Hai vấn đề:
+Khi người dùng bấm nút **▶  Thực hiện** ở các màn task, phản hồi duy nhất hiện tại là một toast trượt vào góc phải. Hai vấn đề:
 
 1. Toast nằm xa con trỏ chuột — người dùng không nhận ngay được click đã ăn.
 2. Không có khoảng "khoá" giữa các click liên tiếp, có thể double-submit.
@@ -16,7 +16,7 @@ Khi người dùng bấm nút **▶ Thêm vào hàng đợi** ở các màn task
 Khi click submit hợp lệ, nút phải:
 1. Đổi sang spinner xoay trong **1 giây** (đồng thời disable để chặn double-click).
 2. Đổi sang `✅ OK` trong **1 giây**.
-3. Quay về `▶ Thêm vào hàng đợi`, enable lại; form giữ nguyên giá trị.
+3. Quay về `▶  Thực hiện`, enable lại; form giữ nguyên giá trị.
 
 Toast `success` bị bỏ. Toast `error` (validate fail) giữ nguyên — phản hồi lỗi vẫn cần.
 
@@ -63,7 +63,7 @@ export async function runWithFeedback(button, asyncFn, opts = {}) {
 
 **Quyết định thiết kế:**
 - `spinnerMs` là **tối thiểu** — `Promise.all` đảm bảo đợi đủ 1s ngay cả khi `asyncFn` xong sớm (queue.add gần như instant).
-- `originalHtml` capture từ chính nút — không hardcode `▶ Thêm vào hàng đợi`. Helper dùng được cho bất kỳ nút submit nào sau này (tương lai có thể tái dùng cho nút Reset, nút export, v.v.).
+- `originalHtml` capture từ chính nút — không hardcode `▶  Thực hiện`. Helper dùng được cho bất kỳ nút submit nào sau này (tương lai có thể tái dùng cho nút Reset, nút export, v.v.).
 - `try/finally` đảm bảo restore khi `asyncFn` throw — lỗi vẫn propagate ra ngoài, gọi-bên-ngoài quyết định hiển thị.
 - API tham số mặc định cho phép override `okHtml` / `spinnerHtml` / timing nếu sau này cần.
 

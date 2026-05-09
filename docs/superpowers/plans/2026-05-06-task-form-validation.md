@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the silent-fail behavior of "Thêm vào hàng đợi" with real input validation (required fields + folder/file existence) and visible toast notifications.
+**Goal:** Replace the silent-fail behavior of " Thực hiện" with real input validation (required fields + folder/file existence) and visible toast notifications.
 
 **Architecture:** Add a pure async `validateConfig` function (testable in vitest) that walks field schemas and reports `{label, reason}` errors. Submit handler in `taskForm.js` calls it, opens collapsed `<details>` first, and shows a red toast on failure / green toast on success. New `fs:exists` IPC backs the disk-existence check. Toast helper is extracted to its own module so both `main.js` and `taskForm.js` can use it. Per-screen field schemas get `required` and `mustExist` markers.
 
@@ -574,7 +574,7 @@ Wait for the Electron window to open.
 
 - [ ] **Step 2: Verify "trống" path**
 
-Navigate to **Render Video** screen. Clear the "Folder overlays" input. Click **▶ Thêm vào hàng đợi**.
+Navigate to **Render Video** screen. Clear the "Folder overlays" input. Click **▶  Thực hiện**.
 Expected: a red toast appears bottom-right with text starting `⚠️ Thiếu dữ liệu: Folder overlays (trống)`. No task is added (queue dock at bottom stays "Hàng đợi trống").
 
 - [ ] **Step 3: Verify "không tồn tại" path**

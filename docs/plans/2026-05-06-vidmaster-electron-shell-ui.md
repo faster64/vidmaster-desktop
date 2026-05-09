@@ -1295,7 +1295,7 @@ export function taskFormShell({ icon, title, description, fields, advanced, task
           <summary>Tuỳ chọn nâng cao</summary>
           ${advanced.map((f) => fieldHtml(f, lastConfig, defaults)).join("")}
         </details>` : ""}
-      <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary">▶  Thực hiện</button>
       <button type="button" id="task-reset" style="margin-left:8px">Reset mặc định</button>
     </form>
   `;
@@ -1452,7 +1452,7 @@ export async function renderRender(el) {
 
 - [ ] **Step 11.2: Smoke-run end-to-end**
 
-Run: `npm run dev`. Workspace already chosen from Task 9. Render screen loads. Form pre-filled from defaults. Pick a different output folder (or accept). Click "▶ Thêm vào hàng đợi". Expected: dock shows the running task with a progress bar; when it errors (because input folders are empty), status flips to error in the queue dock and a toast shows.
+Run: `npm run dev`. Workspace already chosen from Task 9. Render screen loads. Form pre-filled from defaults. Pick a different output folder (or accept). Click "▶  Thực hiện". Expected: dock shows the running task with a progress bar; when it errors (because input folders are empty), status flips to error in the queue dock and a toast shows.
 
 (Toasts are added in Task 14. For now, confirm via DevTools console that the IPC `queue:add` resolved with `{jobId}` and a `queue:update` came back.)
 

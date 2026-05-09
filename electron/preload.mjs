@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld("api", {
   shell: {
     openFolder: (p) => ipcRenderer.invoke("shell:openFolder", p),
     openLogFile: () => ipcRenderer.invoke("shell:openLogFile"),
+    openExternal: (url) => ipcRenderer.invoke("shell:openExternal", url),
   },
   app: {
     getVersion: () => ipcRenderer.invoke("app:getVersion"),

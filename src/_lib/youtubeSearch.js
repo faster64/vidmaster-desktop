@@ -4,8 +4,14 @@ import { parseIso8601Duration } from "./youtube.js";
 const BASE = "https://www.googleapis.com/youtube/v3";
 const SORT_ORDERS = ["relevance", "viewCount", "date"];
 
+function redactKey(url) {
+  return String(url).replace(/([?&])key=[^&]+/, "$1key=***");
+}
+
 async function getJson(url, { signal } = {}) {
   throwIfAborted(signal);
+  const t0 = Date.now();
+  const safeUrl = redactKey(url);
   let res;
   try {
     const fetchPromise = fetch(url, { signal });
@@ -20,8 +26,10 @@ async function getJson(url, { signal } = {}) {
   } catch (err) {
     if (err instanceof AbortError) throw err;
     if (err.name === "AbortError" || signal?.aborted) throw new AbortError();
+    console.log(`[trend] GET ${safeUrl} → ERROR ${err.message} (${Date.now() - t0}ms)`);
     throw err;
   }
+  console.log(`[trend] GET ${safeUrl} → ${res.status} (${Date.now() - t0}ms)`);
   if (!res.ok) {
     let body = "";
     try { body = JSON.stringify(await res.json()); } catch {}

@@ -8,11 +8,11 @@ export async function renderTrendSearch(el) {
 
   el.innerHTML = `
     <div class="screen-header">🔍 Tìm trend</div>
-    <p class="screen-subtitle">Nhập keyword (đa ngôn ngữ) để tìm video hot + kênh nổi bật.</p>
+    <p class="screen-subtitle">Nhập keyword tự nhiên (Việt/Anh/Nhật/Hàn). AI sẽ phân tích để mở rộng thành 1-3 query liên quan.</p>
     <form id="trend-form">
       <div class="field">
-        <label>Keyword</label>
-        <input id="kw" type="text" required placeholder="vd: cat, công nghệ, K-pop">
+        <label>Keyword (ngôn ngữ tự nhiên)</label>
+        <input id="kw" type="text" required placeholder="vd: drama Hàn mới ra trong tháng, video Marvel nói về Iron Man">
       </div>
       <div class="row" style="display:flex;gap:12px;flex-wrap:wrap">
         <div class="field" style="flex:1;min-width:140px">
@@ -43,6 +43,10 @@ export async function renderTrendSearch(el) {
           <label>Min views</label>
           <input id="minViews" type="number" min="0" value="${cfg.minViews ?? 1000}">
         </div>
+        <div class="field" style="flex:1;min-width:120px">
+          <label>Min duration (phút)</label>
+          <input id="minDur" type="number" min="0" step="0.5" value="${cfg.minDurationMinutes ?? 0}">
+        </div>
         <div class="field" style="flex:1;min-width:140px">
           <label>Sort by</label>
           <select id="sortBy">
@@ -56,23 +60,27 @@ export async function renderTrendSearch(el) {
           <input id="topN" type="number" min="0" max="50" value="${cfg.analyzeTopN ?? 10}">
         </div>
       </div>
-      <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary">▶  Thực hiện</button>
     </form>
     <div id="trend-banner" style="margin-top:12px"></div>
     <div id="trend-result" style="margin-top:24px"></div>
   `;
 
+  const submitBtn = el.querySelector('button[type="submit"]');
   if (!s.youtube?.apiKey) {
     el.querySelector("#trend-banner").innerHTML =
       `<div class="banner banner-warn">Thiếu YouTube API key. <a href="#settings">Mở Settings</a></div>`;
+    submitBtn.disabled = true;
   }
-  if (!s.gemini?.apiKeys?.length) {
+  if (!s.ai?.apiKeys?.length) {
     el.querySelector("#trend-banner").innerHTML +=
-      `<div class="banner banner-info">Chưa có Gemini API key — sẽ bỏ qua phân tích AI. <a href="#settings">Thêm key</a></div>`;
+      `<div class="banner banner-warn">Cần AI API key (Groq) để phân tích keyword. <a href="#settings">Thêm key</a></div>`;
+    submitBtn.disabled = true;
   }
 
   el.querySelector("#trend-form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (submitBtn.disabled) return;
     const keyword = el.querySelector("#kw").value.trim();
     if (!keyword) return;
     const config = {
@@ -81,12 +89,13 @@ export async function renderTrendSearch(el) {
       relevanceLanguage: el.querySelector("#lang").value,
       timeWindowDays: parseInt(el.querySelector("#window").value, 10) || 7,
       minViews: parseInt(el.querySelector("#minViews").value, 10) || 0,
+      minDurationMinutes: parseFloat(el.querySelector("#minDur").value) || 0,
       sortBy: el.querySelector("#sortBy").value,
       analyzeTopN: parseInt(el.querySelector("#topN").value, 10) || 0,
       apiKey: s.youtube?.apiKey || "",
-      geminiKeys: s.gemini?.apiKeys || [],
+      aiKeys: s.ai?.apiKeys || [],
+      aiModel: s.ai?.model || "llama-3.1-70b-versatile",
     };
-    const submitBtn = el.querySelector('button[type="submit"]');
     await runWithFeedback(submitBtn, async () => {
       await window.api.queue.add({ type: "trendSearch", config });
       await window.api.settings.set({
@@ -95,6 +104,7 @@ export async function renderTrendSearch(el) {
           relevanceLanguage: config.relevanceLanguage,
           timeWindowDays: config.timeWindowDays,
           minViews: config.minViews,
+          minDurationMinutes: config.minDurationMinutes,
           sortBy: config.sortBy,
           analyzeTopN: config.analyzeTopN,
         },
@@ -114,11 +124,20 @@ export async function renderTrendSearch(el) {
 }
 
 function renderResults(el, result, workspace) {
-  const { videos = [], channels = [] } = result || {};
+  const { videos = [], channels = [], quotaUsed = {}, intent } = result || {};
+  const quotaBadge = `<span style="margin-left:auto;color:#666;font-size:12px">YouTube: ${quotaUsed.youtube ?? 0} units · Gemini: ${quotaUsed.geminiCalls ?? 0} calls</span>`;
+  const intentPanel = intent ? `
+    <div style="background:#f7f9ff;border-left:3px solid #4d7cff;padding:8px 12px;margin-bottom:12px;border-radius:4px;font-size:13px">
+      <div><b>🤖 AI đã tìm theo:</b> ${intent.queries.map((q) => `<code>${escape(q)}</code>`).join(" · ")}</div>
+      ${intent.interpretation ? `<div style="color:#666;margin-top:4px">${escape(intent.interpretation)}</div>` : ""}
+      ${intent.effectiveFilters ? `<div style="color:#666;margin-top:4px;font-size:12px">Filters: window ${intent.effectiveFilters.timeWindowDays}d · sort ${intent.effectiveFilters.sortBy} · min duration ${intent.effectiveFilters.minDurationMinutes}m</div>` : ""}
+    </div>` : "";
   el.innerHTML = `
+    ${intentPanel}
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
       <h3 style="margin:0">Kết quả</h3>
       <button id="dl-selected" class="primary" disabled>⬇ Tải về đã chọn (0)</button>
+      ${quotaBadge}
     </div>
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
       <div>
@@ -145,6 +164,15 @@ function renderResults(el, result, workspace) {
 
   dlBtn.addEventListener("click", () => pushToDownload([...selected], workspace));
 
+  el.querySelectorAll(".vc-card").forEach((card) => {
+    card.addEventListener("click", (e) => {
+      // Skip if clicking on the checkbox itself
+      if (e.target.closest(".vc-check")) return;
+      const vid = card.dataset.vid;
+      if (vid) window.api.shell.openExternal(`https://www.youtube.com/watch?v=${vid}`);
+    });
+  });
+
   el.querySelectorAll(".ch-getUrls").forEach((b) => {
     b.addEventListener("click", async () => {
       const handle = b.dataset.handle;
@@ -159,11 +187,11 @@ function videoCard(v, i) {
   const ana = v.analysis;
   const why = ana && !ana.error ? `<div class="vc-why"><b>Vì sao hot:</b> ${escape(ana.reason)}<ul>${(ana.factors || []).map((f) => `<li>${escape(f)}</li>`).join("")}</ul></div>`
     : ana?.error ? `<div class="vc-why"><i>Phân tích lỗi: ${escape(ana.error)}</i></div>` : "";
-  return `<div class="vc-card" style="display:flex;gap:8px;padding:8px;border-bottom:1px solid #eee">
+  return `<div class="vc-card" data-vid="${escapeAttr(v.id)}" style="display:flex;gap:8px;padding:8px;border-bottom:1px solid #eee;cursor:pointer" title="Click để mở YouTube">
     <input type="checkbox" class="vc-check" data-id="${escapeAttr(v.id)}">
     <img src="${escapeAttr(v.thumbnailUrl)}" style="width:120px;height:auto" loading="lazy">
     <div style="flex:1;min-width:0">
-      <div><a href="https://www.youtube.com/watch?v=${escapeAttr(v.id)}" target="_blank">${escape(v.title)}</a></div>
+      <div style="font-weight:500">${escape(v.title)}</div>
       <div style="color:#666;font-size:12px">${escape(v.channelTitle)} · ${v.velocity.toLocaleString()}/ngày · ${v.viewCount.toLocaleString()} views · ${formatAge(v.publishedAt)}</div>
       ${why}
     </div>

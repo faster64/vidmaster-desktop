@@ -17,7 +17,7 @@ export async function renderGetUrls(el) {
       <div class="field">
         <div class="help">ⓘ Min duration: <strong>${s.youtube.minDurationMinutes}</strong> phút · Sort: <strong>${s.youtube.sortOrder}</strong> (đổi trong Settings → YouTube)</div>
       </div>
-      <button type="submit" class="primary">▶ Thêm vào hàng đợi</button>
+      <button type="submit" class="primary">▶  Thực hiện</button>
     </form>
     <div id="viewer" style="margin-top:24px"></div>
   `;

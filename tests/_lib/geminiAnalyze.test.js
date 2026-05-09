@@ -13,80 +13,69 @@ function fetchJson(json, status = 200) {
   return { ok: status >= 200 && status < 300, status, statusText: "", json: async () => json };
 }
 
-describe("analyzeWhyHot", () => {
+function chatOk(text) {
+  return fetchJson({ choices: [{ message: { content: text } }] });
+}
+
+describe("analyzeWhyHot (Groq)", () => {
   beforeEach(() => { vi.resetAllMocks(); });
 
   it("returns parsed reason and factors on happy path", async () => {
-    global.fetch = vi.fn(async (url) => {
-      if (url.includes("example.com/thumb")) return { ok: true, arrayBuffer: async () => Buffer.from("fakejpeg").buffer };
-      return fetchJson({ candidates: [{ content: { parts: [{ text: '{"reason":"viral title","factors":["hook","timing"]}' }] } }] });
-    });
-    const rotator = new KeyRotator(["k1"]);
-    const result = await analyzeWhyHot({ rotator, video: VIDEO });
+    global.fetch = vi.fn().mockResolvedValue(chatOk('{"reason":"viral title","factors":["hook","timing"]}'));
+    const result = await analyzeWhyHot({ rotator: new KeyRotator(["k1"]), video: VIDEO });
     expect(result).toEqual({ reason: "viral title", factors: ["hook", "timing"] });
   });
 
   it("rotates key on 429 and retries with the next key", async () => {
     let call = 0;
-    global.fetch = vi.fn(async (url) => {
-      if (url.includes("example.com/thumb")) return { ok: true, arrayBuffer: async () => Buffer.from("x").buffer };
+    global.fetch = vi.fn(async () => {
       call++;
       if (call === 1) return fetchJson({ error: { message: "rate" } }, 429);
-      return fetchJson({ candidates: [{ content: { parts: [{ text: '{"reason":"r","factors":[]}' }] } }] });
+      return chatOk('{"reason":"r","factors":[]}');
     });
-    const rotator = new KeyRotator(["k1", "k2"]);
-    const result = await analyzeWhyHot({ rotator, video: VIDEO });
+    const result = await analyzeWhyHot({ rotator: new KeyRotator(["k1", "k2"]), video: VIDEO });
     expect(result.reason).toBe("r");
   });
 
   it("throws AllKeysExhausted when all keys hit 429", async () => {
-    global.fetch = vi.fn(async (url) => {
-      if (url.includes("example.com/thumb")) return { ok: true, arrayBuffer: async () => Buffer.from("x").buffer };
-      return fetchJson({ error: { message: "rate" } }, 429);
-    });
-    const rotator = new KeyRotator(["k1", "k2"]);
-    await expect(analyzeWhyHot({ rotator, video: VIDEO })).rejects.toBeInstanceOf(AllKeysExhausted);
+    global.fetch = vi.fn().mockResolvedValue(fetchJson({ error: { message: "rate" } }, 429));
+    await expect(analyzeWhyHot({ rotator: new KeyRotator(["k1", "k2"]), video: VIDEO })).rejects.toBeInstanceOf(AllKeysExhausted);
   });
 
   it("strips ```json fences and parses", async () => {
-    global.fetch = vi.fn(async (url) => {
-      if (url.includes("example.com/thumb")) return { ok: true, arrayBuffer: async () => Buffer.from("x").buffer };
-      return fetchJson({ candidates: [{ content: { parts: [{ text: '```json\n{"reason":"x","factors":["a"]}\n```' }] } }] });
-    });
+    global.fetch = vi.fn().mockResolvedValue(chatOk('```json\n{"reason":"x","factors":["a"]}\n```'));
     const result = await analyzeWhyHot({ rotator: new KeyRotator(["k"]), video: VIDEO });
     expect(result).toEqual({ reason: "x", factors: ["a"] });
   });
 
   it("returns parse_failed error on invalid JSON", async () => {
-    global.fetch = vi.fn(async (url) => {
-      if (url.includes("example.com/thumb")) return { ok: true, arrayBuffer: async () => Buffer.from("x").buffer };
-      return fetchJson({ candidates: [{ content: { parts: [{ text: "not json at all" }] } }] });
-    });
+    global.fetch = vi.fn().mockResolvedValue(chatOk("not json at all"));
     const result = await analyzeWhyHot({ rotator: new KeyRotator(["k"]), video: VIDEO });
     expect(result).toEqual({ error: "parse_failed" });
   });
 
-  it("includes inline_data part when thumbnail fetch succeeds", async () => {
-    let geminiBody = null;
+  it("sends OpenAI-style chat completion body with Bearer auth", async () => {
+    let captured = null;
     global.fetch = vi.fn(async (url, opts) => {
-      if (url.includes("example.com/thumb")) return { ok: true, arrayBuffer: async () => Buffer.from("img").buffer };
-      geminiBody = JSON.parse(opts.body);
-      return fetchJson({ candidates: [{ content: { parts: [{ text: '{"reason":"r","factors":[]}' }] } }] });
+      captured = { url, headers: opts.headers, body: JSON.parse(opts.body) };
+      return chatOk('{"reason":"r","factors":[]}');
     });
-    await analyzeWhyHot({ rotator: new KeyRotator(["k"]), video: VIDEO });
-    const parts = geminiBody.contents[0].parts;
-    expect(parts).toContainEqual(expect.objectContaining({ inline_data: expect.objectContaining({ mime_type: "image/jpeg" }) }));
+    await analyzeWhyHot({ rotator: new KeyRotator(["mykey"]), video: VIDEO, model: "llama-3.1-8b-instant" });
+    expect(captured.url).toBe("https://api.groq.com/openai/v1/chat/completions");
+    expect(captured.headers.Authorization).toBe("Bearer mykey");
+    expect(captured.body.model).toBe("llama-3.1-8b-instant");
+    expect(captured.body.messages[0].role).toBe("user");
+    expect(captured.body.response_format).toEqual({ type: "json_object" });
   });
 
-  it("proceeds text-only when thumbnail fetch fails", async () => {
-    global.fetch = vi.fn(async (url, opts) => {
-      if (url.includes("example.com/thumb")) return { ok: false, status: 404, statusText: "NF" };
-      const body = JSON.parse(opts.body);
-      const parts = body.contents[0].parts;
-      expect(parts.some((p) => p.inline_data)).toBe(false);
-      return fetchJson({ candidates: [{ content: { parts: [{ text: '{"reason":"r","factors":[]}' }] } }] });
+  it("does not fetch thumbnail (text-only with Groq)", async () => {
+    let urls = [];
+    global.fetch = vi.fn(async (url) => {
+      urls.push(url);
+      return chatOk('{"reason":"r","factors":[]}');
     });
-    const result = await analyzeWhyHot({ rotator: new KeyRotator(["k"]), video: VIDEO });
-    expect(result.reason).toBe("r");
+    await analyzeWhyHot({ rotator: new KeyRotator(["k"]), video: VIDEO });
+    expect(urls).toEqual(["https://api.groq.com/openai/v1/chat/completions"]);
+    expect(urls).not.toContainEqual(expect.stringContaining("example.com/thumb"));
   });
 });

@@ -224,7 +224,7 @@ export async function runGetUrls(config) {
  ⓘ Min duration: 8 phút · Sort: VIEW (read-only)
    (Đổi trong Settings → YouTube nếu cần)
 
-       [ ▶ Thêm vào hàng đợi ]
+       [ ▶  Thực hiện ]
 ```
 
 ### 5.4 In-app viewer (post-run)
@@ -317,7 +317,7 @@ export async function runDownload(config) {
  🔢 Số tải song song    [────●─] 3
    (Default từ Settings · range 1–5)
 
-       [ ▶ Thêm vào hàng đợi ]
+       [ ▶  Thực hiện ]
 ```
 
 The "default = most recent" logic: store `lastConfig.getUrls.outputUrlsFile` after each Get URLs run; pre-fill on Download form open.
@@ -412,7 +412,7 @@ The renderer handles the "folder + checkboxes + reorder" UX and submits the fina
  [Stage 3] 📝 Tên file output  [output         ].mp4
    → sẽ ghi vào: …\done\output.mp4
 
-       [ ▶ Thêm vào hàng đợi ]
+       [ ▶  Thực hiện ]
 ```
 
 - `reorderableList.js` is a small drag/drop component (HTML5 `dragstart/dragover/drop` events; no library).

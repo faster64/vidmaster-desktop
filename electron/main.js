@@ -23,6 +23,9 @@ const getMainWindow = () => mainWindow;
 
 log.transports.file.maxSize = 5 * 1024 * 1024;
 log.transports.file.fileName = "main.log";
+// Pipe console.* through electron-log so logs land in main.log and the
+// DevTools "Console" tab when --remote-debugging is on.
+Object.assign(console, log.functions);
 
 function createWindow() {
   mainWindow = new BrowserWindow({

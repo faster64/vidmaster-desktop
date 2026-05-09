@@ -4,7 +4,7 @@
 >
 > **Note on commits:** The user has a standing instruction to not auto-commit (per `.claude/skills/vidmaster/SKILL.md`). Each task ends with a "Commit" step — the implementer should pause and ask for explicit approval before running the commit, or leave changes unstaged.
 
-**Goal:** Khi click nút **▶ Thêm vào hàng đợi**, hiển thị spinner xoay 1 giây rồi `✅ OK` 1 giây trước khi nút trở lại trạng thái ban đầu — đồng thời disable trong suốt 2s để chặn double-submit.
+**Goal:** Khi click nút **▶  Thực hiện**, hiển thị spinner xoay 1 giây rồi `✅ OK` 1 giây trước khi nút trở lại trạng thái ban đầu — đồng thời disable trong suốt 2s để chặn double-submit.
 
 **Architecture:** Một helper renderer `runWithFeedback(button, asyncFn, opts)` đảm nhiệm state machine của nút. Hai chỗ submit (`taskForm.js` cho 6 màn task, `getUrls.js` cho màn Lấy link kênh) gọi cùng helper. Helper là logic thuần thao tác property — testable bằng vitest mà không cần jsdom.
 
@@ -42,7 +42,7 @@ Tạo `tests/electron/buttonFeedback.test.js`:
 import { describe, it, expect, vi } from "vitest";
 import { runWithFeedback } from "../../electron/renderer/components/buttonFeedback.js";
 
-function makeButton(initial = { innerHTML: "▶ Thêm vào hàng đợi", disabled: false }) {
+function makeButton(initial = { innerHTML: "▶  Thực hiện", disabled: false }) {
   return { ...initial };
 }
 
@@ -54,9 +54,9 @@ describe("runWithFeedback", () => {
   });
 
   it("restores original innerHTML and disabled after completion", async () => {
-    const btn = makeButton({ innerHTML: "▶ Thêm vào hàng đợi", disabled: false });
+    const btn = makeButton({ innerHTML: "▶  Thực hiện", disabled: false });
     await runWithFeedback(btn, async () => {}, { spinnerMs: 5, okMs: 5 });
-    expect(btn.innerHTML).toBe("▶ Thêm vào hàng đợi");
+    expect(btn.innerHTML).toBe("▶  Thực hiện");
     expect(btn.disabled).toBe(false);
   });
 
@@ -344,11 +344,11 @@ Expected: cửa sổ Electron mở, sidebar có 7 màn task.
 
 Cho mỗi màn trong: Render, Snow, Trim, CutBg, Download, Concat, GetUrls:
 1. Điền các field bắt buộc (folder hợp lệ / handle YouTube hợp lệ).
-2. Bấm **▶ Thêm vào hàng đợi**.
+2. Bấm **▶  Thực hiện**.
 3. Quan sát:
    - Trong 1s đầu: nút có vòng xoay trắng, bị disabled (không click được).
    - Trong 1s tiếp: nút đổi thành `✅ OK`, vẫn disabled.
-   - Sau đó: nút trở lại `▶ Thêm vào hàng đợi`, enable lại.
+   - Sau đó: nút trở lại `▶  Thực hiện`, enable lại.
 4. Form vẫn giữ nguyên giá trị đã điền.
 5. Queue dock dưới đáy app có thêm 1 job mới đúng type.
 
