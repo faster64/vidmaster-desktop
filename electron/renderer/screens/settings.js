@@ -17,6 +17,7 @@ export async function renderSettings(el) {
     { id: "ffmpeg",    label: "FFmpeg",    render: (b) => renderFfmpegTab(b, s) },
     { id: "render",    label: "Render",    render: (b) => renderRenderTab(b, s) },
     { id: "youtube",   label: "YouTube",   render: (b) => renderYoutubeTab(b, s) },
+    { id: "ai",        label: "AI",        render: (b) => renderAiTab(b, s) },
     { id: "download",  label: "Download",  render: (b) => renderDownloadTab(b, s) },
     { id: "telegram",  label: "Telegram",  render: (b) => renderTelegramTab(b, s) },
     { id: "avatar",    label: "Avatar",    render: (b) => renderAvatarTab(b, s) },
@@ -370,4 +371,45 @@ function renderAboutTab(el, s, version, rerender) {
 
 function escapeAttr(s) {
   return String(s ?? "").replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
+}
+
+function renderAiTab(el, s) {
+  const keys = s.gemini?.apiKeys || [];
+  el.innerHTML = `
+    <h3>Gemini API keys</h3>
+    <p style="color:#666">Free tier: 1500 req/key/day. Có thể thêm nhiều key — VidMaster sẽ round-robin và tự cooldown khi 429.</p>
+    <div id="ai-keys">
+      ${keys.map((k, i) => keyRow(k, i)).join("")}
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <input id="ai-new-key" type="text" placeholder="AIza..." style="flex:1">
+      <button id="ai-add">+ Thêm</button>
+    </div>
+  `;
+
+  el.querySelector("#ai-add").addEventListener("click", async () => {
+    const input = el.querySelector("#ai-new-key");
+    const v = input.value.trim();
+    if (!v) return;
+    const next = [...(s.gemini?.apiKeys || []), v];
+    await window.api.settings.set({ gemini: { apiKeys: next } });
+    location.reload();
+  });
+
+  el.querySelectorAll(".ai-rm").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const idx = parseInt(btn.dataset.i, 10);
+      const next = (s.gemini?.apiKeys || []).filter((_, i) => i !== idx);
+      await window.api.settings.set({ gemini: { apiKeys: next } });
+      location.reload();
+    });
+  });
+}
+
+function keyRow(k, i) {
+  const masked = k.length > 8 ? `${k.slice(0, 4)}…${k.slice(-4)}` : k;
+  return `<div style="display:flex;gap:8px;align-items:center;padding:4px 0">
+    <code style="flex:1">${masked}</code>
+    <button class="ai-rm" data-i="${i}">Xóa</button>
+  </div>`;
 }

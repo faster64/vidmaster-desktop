@@ -45,6 +45,7 @@ contextBridge.exposeInMainWorld("api", {
     listMp4: (folder) => ipcRenderer.invoke("fs:listMp4", folder),
     readUrlsFile: (p) => ipcRenderer.invoke("fs:readUrlsFile", p),
     readVideoInfos: (p) => ipcRenderer.invoke("fs:readVideoInfos", p),
+    writeTrendUrls: (args) => ipcRenderer.invoke("fs:writeTrendUrls", args),
   },
   ytdlp: {
     getStatus: () => ipcRenderer.invoke("ytdlp:getStatus"),

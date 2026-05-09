@@ -553,3 +553,13 @@ description: <when this skill triggers>
 ```
 
 `SKILL.md` (root) and `add-new-task.md` are the highest-priority skills — written first and most thoroughly. The remainder can be tighter (~50–100 lines each).
+
+---
+
+## Tasks added post-foundation
+
+Each task added after the v1 foundation has its own design + plan doc:
+
+- **Thumb Avatar** — see [2026-05-07-vidmaster-thumb-avatar-design.md](2026-05-07-vidmaster-thumb-avatar-design.md)
+- **YouTube tasks (GetUrls, Download, ConcatHeadTail)** — see [2026-05-07-vidmaster-youtube-tasks-design.md](2026-05-07-vidmaster-youtube-tasks-design.md)
+- **Trend Search** (keyword → trending videos + channels with Gemini "why hot" analysis) — see [2026-05-09-trend-search-design.md](2026-05-09-trend-search-design.md)
