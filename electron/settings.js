@@ -3,7 +3,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import Store from "electron-store";
 
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 7;
 const DEFAULT_API_KEY = "AIzaSyDZTsPGvG0u5du3t7YGueGgnNi7IiulMus";
 const DEFAULT_TELEGRAM = {
   token: "8001545106:AAGRfvKJx1Rq1WFENtjAbXe9eCOSEINVdK0",
@@ -41,6 +41,17 @@ function buildDefaults() {
     telegram: { ...DEFAULT_TELEGRAM },
     avatar: { size: 80, margin: 16, lastPosition: "bottom-right" },
     ui: { theme: "light", logLevel: "info", completedHistorySize: 50, lastSettingsTab: "workspace" },
+    gemini: {
+      apiKeys: [],
+    },
+    trendSearch: {
+      regionCode: "VN",
+      relevanceLanguage: "vi",
+      timeWindowDays: 7,
+      minViews: 1000,
+      sortBy: "velocity",
+      analyzeTopN: 10,
+    },
     lastUsedTask: "render",
   };
 }
@@ -101,6 +112,19 @@ function migrate(store) {
     store.delete("workspace");
     store.delete("tracking");
     store.delete("lastConfig");
+  }
+  if (v < 7) {
+    store.set("gemini", {
+      apiKeys: store.get("gemini.apiKeys") ?? [],
+    });
+    store.set("trendSearch", {
+      regionCode: store.get("trendSearch.regionCode") ?? "VN",
+      relevanceLanguage: store.get("trendSearch.relevanceLanguage") ?? "vi",
+      timeWindowDays: store.get("trendSearch.timeWindowDays") ?? 7,
+      minViews: store.get("trendSearch.minViews") ?? 1000,
+      sortBy: store.get("trendSearch.sortBy") ?? "velocity",
+      analyzeTopN: store.get("trendSearch.analyzeTopN") ?? 10,
+    });
   }
   store.set("version", SCHEMA_VERSION);
 }

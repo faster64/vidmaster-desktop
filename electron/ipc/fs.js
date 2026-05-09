@@ -49,4 +49,13 @@ export function registerFsIpc() {
         return { publishedAt, url, viewCount, title, duration };
       });
   });
+
+  ipcMain.handle("fs:writeTrendUrls", async (_, { workspace, stamp, content }) => {
+    if (!workspace) return null;
+    const dir = path.join(workspace, "trends", stamp);
+    fs.mkdirSync(dir, { recursive: true });
+    const urlsFile = path.join(dir, "urls.txt");
+    fs.writeFileSync(urlsFile, content, "utf8");
+    return { urlsFile, output: dir };
+  });
 }
