@@ -6,8 +6,6 @@ const ERROR_MESSAGES = {
   unknown: "Có lỗi khi kiểm tra cập nhật",
 };
 
-const AUTO_CONTINUE_MS = 5000;
-
 function formatSpeed(bps) {
   if (!bps) return "";
   const mbps = bps / (1024 * 1024);
@@ -43,25 +41,17 @@ export function mountUpdateCheck(root, { onProceed }) {
   const $continue = root.querySelector("[data-continue]");
 
   let unsubscribe = null;
-  let autoContinueTimer = null;
   let proceeded = false;
 
-  function clearAutoContinue() {
-    if (autoContinueTimer) { clearTimeout(autoContinueTimer); autoContinueTimer = null; }
-  }
-
   function showError(code, message) {
-    clearAutoContinue();
     $status.textContent = ERROR_MESSAGES[code] || ERROR_MESSAGES.unknown;
     $sub.textContent = message ? `(${code}) ${message}` : `(${code})`;
     $spinner.hidden = true;
     $progressWrap.hidden = true;
     $actions.hidden = false;
-    autoContinueTimer = setTimeout(() => { doProceed(); }, AUTO_CONTINUE_MS);
   }
 
   function showChecking() {
-    clearAutoContinue();
     $status.textContent = "Đang kiểm tra cập nhật...";
     $sub.textContent = "";
     $spinner.hidden = false;
@@ -70,7 +60,6 @@ export function mountUpdateCheck(root, { onProceed }) {
   }
 
   function showAvailable(currentVersion, nextVersion) {
-    clearAutoContinue();
     $status.textContent = `Đã có bản v${nextVersion}. Đang tải...`;
     $sub.textContent = `Hiện tại: v${currentVersion}`;
     $spinner.hidden = true;
@@ -96,7 +85,6 @@ export function mountUpdateCheck(root, { onProceed }) {
   async function doProceed() {
     if (proceeded) return;
     proceeded = true;
-    clearAutoContinue();
     if (unsubscribe) unsubscribe();
     await window.api.updater.proceed();
     onProceed();
