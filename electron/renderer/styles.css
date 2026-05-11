@@ -128,3 +128,33 @@ details.advanced summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
 @keyframes btn-spin { to { transform: rotate(360deg); } }
 
 button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.update-check {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--bg, #1e1e1e); color: var(--fg, #eee);
+  font-family: system-ui, sans-serif;
+  z-index: 10000;
+  padding: 32px;
+  text-align: center;
+}
+.update-check__logo { font-size: 32px; font-weight: 700; margin-bottom: 24px; letter-spacing: 1px; }
+.update-check__status { font-size: 16px; margin-bottom: 16px; min-height: 24px; }
+.update-check__sub { font-size: 13px; opacity: 0.7; margin-bottom: 16px; min-height: 18px; }
+.update-check__spinner {
+  width: 28px; height: 28px; border: 3px solid #555; border-top-color: #4a9eff;
+  border-radius: 50%; animation: uc-spin 0.8s linear infinite; margin: 8px 0;
+}
+@keyframes uc-spin { to { transform: rotate(360deg); } }
+.update-check__progress {
+  width: 320px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin: 8px 0;
+}
+.update-check__bar { height: 100%; background: #4a9eff; transition: width 200ms linear; width: 0%; }
+.update-check__actions { display: flex; gap: 12px; margin-top: 16px; }
+.update-check__btn {
+  padding: 8px 20px; border-radius: 4px; border: 1px solid #555; background: #2a2a2a; color: #eee;
+  cursor: pointer; font-size: 14px;
+}
+.update-check__btn:hover { background: #353535; }
+.update-check__btn--primary { background: #4a9eff; border-color: #4a9eff; }
+.update-check__btn--primary:hover { background: #5fa8ff; }

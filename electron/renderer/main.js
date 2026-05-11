@@ -11,6 +11,7 @@ import { renderTrendSearch } from "./screens/trendSearch.js";
 import { renderQueue } from "./screens/queue.js";
 import { renderSettings } from "./screens/settings.js";
 import { renderOnboarding } from "./screens/onboarding.js";
+import { mountUpdateCheck } from "./screens/updateCheck.js";
 import { toast } from "./components/toast.js";
 
 const screens = {
@@ -20,6 +21,7 @@ const screens = {
   queue: renderQueue, settings: renderSettings,
 };
 
+const appEl = document.getElementById("app");
 const sidebarEl = document.getElementById("sidebar");
 const contentEl = document.getElementById("content");
 const dockEl = document.getElementById("queue-dock");
@@ -40,6 +42,8 @@ window.addEventListener("hashchange", () => {
 });
 
 async function bootstrap() {
+  appEl.hidden = false;
+
   const list = await window.api.workspace.list();
   if (list.length === 0) {
     contentEl.innerHTML = "";
@@ -63,7 +67,21 @@ async function bootstrap() {
   await navigate(initial);
 }
 
-bootstrap();
+function startUpdateCheck() {
+  appEl.hidden = true;
+  const overlay = document.createElement("div");
+  overlay.id = "update-check-root";
+  document.body.appendChild(overlay);
+
+  mountUpdateCheck(overlay, {
+    onProceed: () => {
+      overlay.remove();
+      bootstrap();
+    },
+  });
+}
+
+startUpdateCheck();
 
 const completedSeen = new Set();
 window.api.queue.onUpdate((state) => {

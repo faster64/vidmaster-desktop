@@ -1,8 +1,13 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-const subscribers = { "queue:update": new Set(), "settings:change": new Set() };
+const subscribers = {
+  "queue:update": new Set(),
+  "settings:change": new Set(),
+  "updater:event": new Set(),
+};
 ipcRenderer.on("queue:update", (_, s) => subscribers["queue:update"].forEach((cb) => cb(s)));
 ipcRenderer.on("settings:change", (_, s) => subscribers["settings:change"].forEach((cb) => cb(s)));
+ipcRenderer.on("updater:event", (_, e) => subscribers["updater:event"].forEach((cb) => cb(e)));
 
 contextBridge.exposeInMainWorld("api", {
   queue: {
@@ -40,6 +45,11 @@ contextBridge.exposeInMainWorld("api", {
     getWorkspace: () => ipcRenderer.invoke("app:getWorkspace"),
     ensureWorkspace: (root) => ipcRenderer.invoke("app:ensureWorkspace", root),
     trackingPing: () => ipcRenderer.invoke("app:trackingPing"),
+  },
+  updater: {
+    check: () => ipcRenderer.invoke("updater:check"),
+    proceed: () => ipcRenderer.invoke("updater:proceed"),
+    onEvent: (cb) => { subscribers["updater:event"].add(cb); return () => subscribers["updater:event"].delete(cb); },
   },
   fs: {
     exists: (p) => ipcRenderer.invoke("fs:exists", p),
