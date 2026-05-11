@@ -10,6 +10,7 @@ import { registerShellIpc } from "./ipc/shell.js";
 import { registerAppIpc } from "./ipc/app.js";
 import { registerFsIpc } from "./ipc/fs.js";
 import { registerYtdlpIpc } from "./ipc/ytdlp.js";
+import { registerUpdaterIpc } from "./ipc/updater.js";
 import { detectEncoder } from "./gpuDetect.js";
 import { existsSync } from "fs";
 import { updateBinary } from "../src/_lib/ytdlp.js";
@@ -67,6 +68,14 @@ app.whenReady().then(async () => {
   registerFsIpc();
   registerYtdlpIpc(() => settings, () => queue);
 
+  registerUpdaterIpc(getMainWindow, {
+    onProceed: () => bootstrapAfterUpdateCheck(settings),
+  });
+
+  createWindow();
+});
+
+function bootstrapAfterUpdateCheck(settings) {
   const ws = settings.get("workspace");
   if (ws && existsSync(ws)) {
     try {
@@ -76,7 +85,6 @@ app.whenReady().then(async () => {
     }
   }
 
-  // Telegram: ping tracking chat khi app mở (định danh từ settings, fallback workspace name)
   const tg = settings.get("telegram") || {};
   const identity = (settings.get("tracking.identifier") || "").trim() || workspaceName(ws);
   sendTelegram({ token: tg.token, chatId: tg.trackingChatId, message: `<pre>${identity}</pre>` })
@@ -91,9 +99,7 @@ app.whenReady().then(async () => {
         .catch((err) => log.warn("yt-dlp auto-update failed:", err.message));
     }
   }
-
-  createWindow();
-});
+}
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

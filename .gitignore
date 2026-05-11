@@ -4,6 +4,9 @@ dist/
 .DS_Store
 .vscode/
 .idea/
+.env
+.env.local
+.env.*.local
 tests/fixtures/*.mp4
 tests/fixtures/*.png
 tests/fixtures/*.jpg
