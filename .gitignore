@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.vscode/
+.idea/
+.env
+.env.local
+.env.*.local
+electron/_defaults.json
+.claude/worktrees/
+tests/fixtures/*.mp4
+tests/fixtures/*.png
+tests/fixtures/*.jpg
+!tests/fixtures/README.md

@@ -1,0 +1,85 @@
+{
+  "name": "vidmaster-desktop",
+  "version": "0.1.4",
+  "private": true,
+  "type": "module",
+  "description": "VidMaster — Windows desktop app (Plan 1: foundation modules only)",
+  "main": "electron/main.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "predev": "node scripts/generate-defaults.mjs",
+    "dev": "electron .",
+    "bump": "node scripts/bump-version.mjs",
+    "gen-defaults": "node scripts/generate-defaults.mjs",
+    "prebuild": "npm run gen-defaults && npm run bump",
+    "build": "electron-builder --win --x64",
+    "prerelease": "npm run gen-defaults && npm run bump",
+    "release": "dotenv -- electron-builder --win --x64 --publish always",
+    "build:dir": "electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.vidmaster.app",
+    "productName": "VidMaster",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "faster64",
+        "repo": "vidmaster-desktop"
+      }
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**",
+      "src/**",
+      "node_modules/**",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/{@ffmpeg-installer,ffmpeg-static,sharp}/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "VidMaster",
+      "uninstallDisplayName": "VidMaster"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "electron-log": "^5.2.0",
+    "electron-store": "^10.0.1",
+    "electron-updater": "^6.8.3",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "p-limit": "^6.2.0",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^11.0.0",
+    "electron": "^30.5.1",
+    "electron-builder": "^25.1.7",
+    "png-to-ico": "^2.1.8",
+    "vitest": "^1.6.0"
+  }
+}
