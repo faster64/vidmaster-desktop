@@ -41,7 +41,7 @@ export async function runTrimEnds(config) {
       if (newDuration <= 0) {
         throw new Error(`Video ${file} (${duration.toFixed(1)}s) quá ngắn để cắt ${trimStart}s đầu + ${trimEnd}s cuối`);
       }
-      const outName = `${path.parse(file).name}_trimmed.mp4`;
+      const outName = `${path.parse(file).name}.mp4`;
       const outPath = path.join(output, outName);
       runner.log("info", `${message}: ${duration.toFixed(1)}s → ${newDuration.toFixed(1)}s (cắt đầu ${trimStart}s, cuối ${trimEnd}s)`);
 
