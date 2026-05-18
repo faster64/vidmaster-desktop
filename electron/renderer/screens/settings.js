@@ -322,11 +322,19 @@ function renderLogTab(el, s) {
 
 function renderAboutTab(el, s, version, rerender) {
   el.innerHTML = `
-    <p>Version: <strong>${version}</strong></p>
+    <h3>📦 Phiên bản</h3>
+    <p>Phiên bản hiện tại: <strong>${escapeAttr(version)}</strong></p>
+    <div class="field-row" style="margin:8px 0;align-items:center">
+      <button id="check-update">🔄 Kiểm tra cập nhật</button>
+      <span id="update-status" style="margin-left:12px;color:#aaa"></span>
+    </div>
+
+    <h3 style="margin-top:24px">⚙️ Quản lý dữ liệu</h3>
     <button id="reset" class="danger">Reset settings về mặc định (giữ workspace + định danh)</button>
     <button id="reset-all" class="danger" style="margin-left:8px">🗑 Xoá toàn bộ dữ liệu — làm lại từ đầu</button>
     <div class="help" style="margin-top:6px">"Xoá toàn bộ" sẽ xoá settings + workspace + định danh + lastConfig. App sẽ reload và yêu cầu onboarding lại. Files trong folder workspace KHÔNG bị xoá.</div>
   `;
+
   el.querySelector("#reset").addEventListener("click", async () => {
     if (!confirm("Reset toàn bộ cài đặt về mặc định? (Workspace path sẽ giữ nguyên)")) return;
     await window.api.settings.softReset();
@@ -344,6 +352,65 @@ function renderAboutTab(el, s, version, rerender) {
     await window.api.settings.resetAll();
     location.reload();
   });
+
+  const $btn = el.querySelector("#check-update");
+  const $status = el.querySelector("#update-status");
+  let unsubscribe = null;
+
+  function setStatus(text, color = "#aaa") {
+    $status.textContent = text;
+    $status.style.color = color;
+  }
+
+  $btn.addEventListener("click", () => {
+    $btn.disabled = true;
+    setStatus("Đang kiểm tra...", "#aaa");
+    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+    unsubscribe = window.api.updater.onEvent((event) => {
+      switch (event.type) {
+        case "checking":
+          setStatus("Đang kiểm tra...", "#aaa");
+          break;
+        case "not-available":
+          setStatus("✓ Bạn đang dùng bản mới nhất.", "#4caf50");
+          $btn.disabled = false;
+          if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+          break;
+        case "available":
+          setStatus(`Có v${event.nextVersion} — đang tải...`, "#2196f3");
+          break;
+        case "download-progress":
+          setStatus(`Đang tải ${(event.percent || 0).toFixed(0)}% (${formatSpeed(event.bytesPerSecond)})`, "#2196f3");
+          break;
+        case "downloaded":
+          setStatus(`✓ Đã tải xong v${event.nextVersion} — app sẽ khởi động lại...`, "#4caf50");
+          // Don't unsubscribe — app is restarting via autoUpdater.quitAndInstall().
+          break;
+        case "error":
+          setStatus(`❌ ${UPDATE_ERROR_MESSAGES[event.code] || event.message || event.code}`, "#f44336");
+          $btn.disabled = false;
+          if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+          break;
+      }
+    });
+    window.api.updater.check();
+  });
+}
+
+const UPDATE_ERROR_MESSAGES = {
+  timeout: "Không kiểm tra được cập nhật (quá thời gian)",
+  network: "Không kết nối được tới máy chủ cập nhật (network)",
+  "rate-limit": "GitHub giới hạn truy cập, vui lòng thử lại sau (rate-limit)",
+  signature: "Bản cập nhật không hợp lệ (signature)",
+  unknown: "Có lỗi khi kiểm tra cập nhật",
+};
+
+function formatSpeed(bps) {
+  if (!bps) return "";
+  const mbps = bps / (1024 * 1024);
+  if (mbps >= 1) return `${mbps.toFixed(1)} MB/s`;
+  const kbps = bps / 1024;
+  return `${kbps.toFixed(0)} KB/s`;
 }
 
 function escapeAttr(s) {
