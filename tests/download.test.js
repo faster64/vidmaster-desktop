@@ -125,4 +125,49 @@ describe("runDownload", () => {
     for (const c of fakeChildren) c.emit("close", 1);
     await expect(promise).rejects.toThrow(/Aborted/);
   });
+
+  it("rejects invalid format", async () => {
+    const urlsFile = path.join(tmpDir, "urls.txt");
+    fs.writeFileSync(urlsFile, "u1\n", "utf8");
+    await expect(runDownload({
+      urlsFile, output: tmpDir, ytdlpPath: "/yt.exe", maxConcurrent: 1, format: "wav",
+    })).rejects.toThrow(/Định dạng không hợp lệ/);
+  });
+
+  it("uses mp4 args by default (no format param)", async () => {
+    const urlsFile = path.join(tmpDir, "urls.txt");
+    fs.writeFileSync(urlsFile, "u1\n", "utf8");
+    const cp = await import("child_process");
+
+    const promise = runDownload({
+      urlsFile, output: tmpDir, ytdlpPath: "/yt.exe", maxConcurrent: 1,
+    });
+    await new Promise((r) => setImmediate(r));
+    fakeChildren[0].emit("close", 0);
+    await promise;
+
+    const args = cp.spawn.mock.calls[0][1];
+    expect(args).toContain("--merge-output-format");
+    expect(args).toContain("mp4");
+    expect(args).not.toContain("--extract-audio");
+  });
+
+  it("uses mp3 args when format=mp3", async () => {
+    const urlsFile = path.join(tmpDir, "urls.txt");
+    fs.writeFileSync(urlsFile, "u1\n", "utf8");
+    const cp = await import("child_process");
+
+    const promise = runDownload({
+      urlsFile, output: tmpDir, ytdlpPath: "/yt.exe", maxConcurrent: 1, format: "mp3",
+    });
+    await new Promise((r) => setImmediate(r));
+    fakeChildren[0].emit("close", 0);
+    await promise;
+
+    const args = cp.spawn.mock.calls[0][1];
+    expect(args).toContain("--extract-audio");
+    expect(args).toContain("--audio-format");
+    expect(args).toContain("mp3");
+    expect(args).not.toContain("--merge-output-format");
+  });
 });
