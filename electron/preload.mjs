@@ -55,6 +55,8 @@ contextBridge.exposeInMainWorld("api", {
   fs: {
     exists: (p) => ipcRenderer.invoke("fs:exists", p),
     listMp4: (folder) => ipcRenderer.invoke("fs:listMp4", folder),
+    listImages: (folder) => ipcRenderer.invoke("fs:listImages", folder),
+    readImageDataUrl: (p) => ipcRenderer.invoke("fs:readImageDataUrl", p),
     readUrlsFile: (p) => ipcRenderer.invoke("fs:readUrlsFile", p),
     readVideoInfos: (p) => ipcRenderer.invoke("fs:readVideoInfos", p),
     writeTrendUrls: (args) => ipcRenderer.invoke("fs:writeTrendUrls", args),
