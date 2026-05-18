@@ -1,6 +1,6 @@
 {
   "name": "vidmaster-desktop",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "type": "module",
   "description": "VidMaster — Windows desktop app (Plan 1: foundation modules only)",
