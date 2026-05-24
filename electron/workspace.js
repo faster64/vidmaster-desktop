@@ -4,6 +4,7 @@ import path from "path";
 export const REQUIRED_SUBFOLDERS = [
   "overlays", "backgrounds", "done",
   "elderly/images", "elderly/videos", "elderly/output",
+  "elderly/originals", "elderly/rendered",
 ];
 
 const CHROMA_KEY_TEMPLATE = ``;

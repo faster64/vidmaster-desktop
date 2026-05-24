@@ -74,3 +74,18 @@ await sharp({
   create: { width: 100, height: 100, channels: 3, background: { r: 30, g: 30, b: 220 } },
 }).jpeg({ quality: 90 }).toFile(avatarJpg);
 console.log("✓ tiny-avatar-square.jpg");
+
+// 7. tiny.mp3 — 1s sine 440Hz mono mp3
+const mp3 = path.join(__dirname, "tiny.mp3");
+if (fs.existsSync(mp3)) fs.unlinkSync(mp3);
+const r7 = spawnSync(ffmpegPath, [
+  "-y",
+  "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+  "-c:a", "libmp3lame", "-b:a", "64k",
+  mp3,
+]);
+if (r7.status !== 0) {
+  console.error(r7.stderr.toString());
+  process.exit(1);
+}
+console.log("✓ tiny.mp3");

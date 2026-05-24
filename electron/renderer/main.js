@@ -9,6 +9,7 @@ import { renderConcatHeadTail } from "./screens/concatHeadTail.js";
 import { renderThumbAvatar } from "./screens/thumbAvatar.js";
 import { renderRecolorThumb } from "./screens/recolorThumb.js";
 import { renderElderlyVideo } from "./screens/elderlyVideo.js";
+import { renderElderlyRender } from "./screens/elderlyRender.js";
 import { renderTrendSearch } from "./screens/trendSearch.js";
 import { renderQueue } from "./screens/queue.js";
 import { renderSettings } from "./screens/settings.js";
@@ -20,7 +21,8 @@ const screens = {
   render: renderRender, trimEnds: renderTrimEnds, cutBg: renderCutBg,
   getUrls: renderGetUrls, download: renderDownload, concatHeadTail: renderConcatHeadTail,
   thumbAvatar: renderThumbAvatar, recolorThumb: renderRecolorThumb,
-  elderlyVideo: renderElderlyVideo, trendSearch: renderTrendSearch,
+  elderlyVideo: renderElderlyVideo, elderlyRender: renderElderlyRender,
+  trendSearch: renderTrendSearch,
   queue: renderQueue, settings: renderSettings,
 };
 
@@ -105,6 +107,7 @@ const TASK_LABELS = {
   render: "Render Video", trimEnds: "Cắt đầu/cuối", cutBg: "Chia nhỏ video nền",
   getUrls: "Lấy link kênh", download: "Tải video", concatHeadTail: "Nối đầu/cuối",
   thumbAvatar: "Gắn avatar", recolorThumb: "Đổi màu thumbnail",
-  elderlyVideo: "Video người già", trendSearch: "Tìm trend",
+  elderlyVideo: "Video nền người già", elderlyRender: "Render video người già",
+  trendSearch: "Tìm trend",
 };
 function labelOf(t) { return TASK_LABELS[t] || t; }

@@ -27,7 +27,7 @@ export async function renderElderlyVideo(el) {
   const lastUseGPU = s.render?.useGPU ?? false;
 
   el.innerHTML = `
-    <div class="screen-header">🧓 Video người già</div>
+    <div class="screen-header">🧓 Video nền người già</div>
     <p class="screen-subtitle">Ghép video overlay (.mp4) lên ảnh nền tĩnh (.jpg/.png). Output 1280×720, audio lấy từ video.</p>
     <form id="task-form">
       <div class="field">

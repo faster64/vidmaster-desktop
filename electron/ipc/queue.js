@@ -10,6 +10,7 @@ import { runConcatHeadTail } from "../../src/concatHeadTail.js";
 import { runThumbAvatar } from "../../src/thumbAvatar.js";
 import { runRecolorThumb } from "../../src/recolorThumb.js";
 import { runElderlyVideo } from "../../src/elderlyVideo.js";
+import { runElderlyRender } from "../../src/elderlyRender.js";
 import { runTrendSearch } from "../../src/trendSearch.js";
 import { runYtdlpUpdate } from "./ytdlp.js";
 import { sendTelegram, workspaceName, escapeHtml, fmtTime, fmtDurationMin } from "../telegram.js";
@@ -21,6 +22,7 @@ export function registerQueueIpc(getMainWindow, getSettings) {
     thumbAvatar: runThumbAvatar,
     recolorThumb: runRecolorThumb,
     elderlyVideo: runElderlyVideo,
+    elderlyRender: runElderlyRender,
     trendSearch: runTrendSearch,
     _ytdlpUpdate: runYtdlpUpdate,
   };
