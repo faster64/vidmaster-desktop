@@ -7,6 +7,7 @@ export async function renderDownload(el) {
   const lastUrlsFile = last.urlsFile ?? "";
   const lastOutput = last.output ?? `${ws}\\downloads`;
   const lastConcurrent = last.maxConcurrent ?? s.download.maxConcurrent;
+  const lastFormat = last.format ?? "mp4";
 
   el.innerHTML = `
     <div class="screen-header">⬇️ Tải video</div>
@@ -26,6 +27,13 @@ export async function renderDownload(el) {
           <input id="output" type="text" name="output" value="${escapeAttr(lastOutput)}" required>
           <button type="button" id="pick-output">📂 Chọn…</button>
           <button type="button" data-open-id="output" title="Mở folder">↗</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>📦 Định dạng</label>
+        <div style="display:flex;gap:16px;margin-top:4px">
+          <label><input type="radio" name="format" value="mp4" ${lastFormat === "mp4" ? "checked" : ""}> 🎬 mp4 (video + audio)</label>
+          <label><input type="radio" name="format" value="mp3" ${lastFormat === "mp3" ? "checked" : ""}> 🎵 mp3 (chỉ audio)</label>
         </div>
       </div>
       <div class="field">
@@ -63,16 +71,17 @@ export async function renderDownload(el) {
     const urlsFile = el.querySelector("#urls-file").value.trim();
     const output = el.querySelector("#output").value.trim();
     const maxConcurrent = parseInt(cc.value, 10);
+    const format = el.querySelector('input[name="format"]:checked')?.value || "mp4";
     if (!urlsFile || !output) return;
 
     const config = {
-      urlsFile, output, maxConcurrent,
+      urlsFile, output, maxConcurrent, format,
       ytdlpPath: s.download.ytdlpPath,
     };
     const submitBtn = el.querySelector('button[type="submit"]');
     await runWithFeedback(submitBtn, async () => {
       await window.api.queue.add({ type: "download", config });
-      await window.api.settings.set({ "lastConfig.download": { urlsFile, output, maxConcurrent } });
+      await window.api.settings.set({ "lastConfig.download": { urlsFile, output, maxConcurrent, format } });
     });
   });
 }

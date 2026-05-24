@@ -58,4 +58,22 @@ export function registerFsIpc() {
     fs.writeFileSync(urlsFile, content, "utf8");
     return { urlsFile, output: dir };
   });
+
+  ipcMain.handle("fs:listImages", (_, folder) => {
+    if (!folder || !fs.existsSync(folder)) return [];
+    return fs.readdirSync(folder)
+      .filter((n) => /\.(jpe?g|png)$/i.test(n))
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+  });
+
+  ipcMain.handle("fs:readImageDataUrl", (_, fullPath) => {
+    if (!fullPath || !fs.existsSync(fullPath)) return null;
+    const ext = path.extname(fullPath).toLowerCase();
+    let mime;
+    if (ext === ".jpg" || ext === ".jpeg") mime = "image/jpeg";
+    else if (ext === ".png") mime = "image/png";
+    else return null;
+    const b64 = fs.readFileSync(fullPath).toString("base64");
+    return `data:${mime};base64,${b64}`;
+  });
 }

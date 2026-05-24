@@ -23,7 +23,6 @@ export function registerUpdaterIpc(getMainWindow, { onProceed }) {
   ipcMain.handle("updater:proceed", () => {
     if (proceedFired) return false;
     proceedFired = true;
-    if (updater) updater.dispose();
     try { onProceed(); } catch (err) { log.error(`onProceed failed: ${err.message}`); }
     return true;
   });

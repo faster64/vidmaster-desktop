@@ -6,6 +6,7 @@ const NAV_ITEMS = [
       { id: "trimEnds", icon: "😘", label: "Cắt đầu/cuối" },
       { id: "concatHeadTail", icon: "😍", label: "Nối đầu/cuối" },
       { id: "thumbAvatar", icon: "😂", label: "Gắn avatar vào thumbnail" },
+      { id: "recolorThumb", icon: "🎨", label: "Đổi màu thumbnail" },
       { id: "trendSearch", icon: "🔍", label: "Tìm trend" },
       { id: "getUrls", icon: "😅", label: "Lấy link kênh" },
       { id: "download", icon: "🤣", label: "Tải video" },

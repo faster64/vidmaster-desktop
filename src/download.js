@@ -14,12 +14,14 @@ export async function runDownload(config) {
   const {
     urlsFile, output, ytdlpPath,
     maxConcurrent = 3,
+    format = "mp4",
   } = config;
   const { signal } = config;
 
   if (!urlsFile) throw new Error("Thiếu file URLs.");
   if (!output) throw new Error("Thiếu folder output.");
   if (!ytdlpPath) throw new Error("Thiếu đường dẫn yt-dlp.");
+  if (format !== "mp4" && format !== "mp3") throw new Error(`Định dạng không hợp lệ: ${format}`);
 
   runner.checkAborted();
   fs.mkdirSync(output, { recursive: true });
@@ -65,7 +67,7 @@ export async function runDownload(config) {
 
   try {
     const results = await Promise.allSettled(urls.map((url) => limit(() => downloadOne({
-      url, output, ytdlpPath, archiveFile, signal,
+      url, output, ytdlpPath, archiveFile, signal, format,
       onPercent: (p) => { inflight.set(url, p); refreshProgress(); },
       onLog: (level, line) => runner.onLog?.(level, line),
       registerChild: (c) => liveChildren.add(c),
@@ -89,19 +91,22 @@ export async function runDownload(config) {
 
   throwIfAborted(signal);
 
-  const outputs = renameSanitized(output);
+  const outputs = renameSanitized(output, format);
   runner.setProgress(100, `Đã tải ${outputs.length}/${total}`);
 
   return { ok: errors.length === 0, outputs, errors };
 }
 
-function downloadOne({ url, output, ytdlpPath, archiveFile, signal, onPercent, onLog, registerChild, unregisterChild }) {
+function downloadOne({ url, output, ytdlpPath, archiveFile, signal, format, onPercent, onLog, registerChild, unregisterChild }) {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) return reject(new AbortError());
 
+    const formatArgs = format === "mp3"
+      ? ["-f", "bestaudio/best", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0"]
+      : ["-f", "bestvideo+bestaudio/best", "--merge-output-format", "mp4"];
+
     const args = [
-      "-f", "bestvideo+bestaudio/best",
-      "--merge-output-format", "mp4",
+      ...formatArgs,
       "-o", path.join(output, "%(title)s.%(ext)s"),
       "--write-thumbnail",
       "--convert-thumbnails", "jpg",
@@ -169,15 +174,16 @@ function shortUrl(u) {
   return m ? m[1] : u.slice(0, 30);
 }
 
-function renameSanitized(folder) {
+function renameSanitized(folder, format) {
   const out = [];
-  for (const ext of [".mp4", ".jpg"]) {
+  const mediaExt = format === "mp3" ? ".mp3" : ".mp4";
+  for (const ext of [mediaExt, ".jpg"]) {
     const files = fs.readdirSync(folder).filter((n) => n.toLowerCase().endsWith(ext));
     for (const file of files) {
       const base = file.slice(0, file.length - ext.length);
       const safe = sanitizeFilename(base);
       if (safe === base) {
-        if (ext === ".mp4") out.push(path.join(folder, file));
+        if (ext === mediaExt) out.push(path.join(folder, file));
         continue;
       }
       const newName = safe + ext;
@@ -185,7 +191,7 @@ function renameSanitized(folder) {
       if (!fs.existsSync(newPath)) {
         fs.renameSync(path.join(folder, file), newPath);
       }
-      if (ext === ".mp4") out.push(newPath);
+      if (ext === mediaExt) out.push(newPath);
     }
   }
   return out;
