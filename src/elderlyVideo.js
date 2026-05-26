@@ -14,6 +14,9 @@ const AUDIO_FREQ = 44100;
 const VIDEO_QUALITY = 23;
 const HISTORY_FILE = "_processed.json";
 
+const BG_VIDEO_EXT = /\.mp4$/i;
+const BG_ANY_EXT   = /\.(jpe?g|png|mp4)$/i;
+
 export const ANCHORS = new Set([
   "top-left", "top", "top-right",
   "left", "center", "right",
@@ -87,16 +90,26 @@ function probeVideo(file) {
 }
 
 async function processOnePair({
-  imagePath, videoPath, outputPath,
+  backgroundPath, videoPath, outputPath,
   anchor, overlayWidth, overlayHeight, offsetX, offsetY,
   useGPU, gpuEncoder, runner,
 }) {
-  const { duration, hasAudio } = await probeVideo(videoPath);
+  const { duration: overlayDuration, hasAudio } = await probeVideo(videoPath);
   const [x, y] = computeOverlayXY(anchor, OUTPUT_W, OUTPUT_H, overlayWidth, overlayHeight, offsetX, offsetY);
 
+  const bgIsVideo = BG_VIDEO_EXT.test(backgroundPath);
+  let targetDuration = overlayDuration;
+
   const args = ["-y"];
-  args.push("-loop", "1", "-framerate", String(FIXED_FPS), "-i", imagePath);
-  args.push("-i", videoPath);
+  if (bgIsVideo) {
+    const { duration: bgDuration } = await probeVideo(backgroundPath);
+    targetDuration = Math.max(bgDuration, overlayDuration);
+    args.push("-stream_loop", "-1", "-i", backgroundPath);
+    args.push("-stream_loop", "-1", "-i", videoPath);
+  } else {
+    args.push("-loop", "1", "-framerate", String(FIXED_FPS), "-i", backgroundPath);
+    args.push("-i", videoPath);
+  }
   if (!hasAudio) {
     args.push("-f", "lavfi", "-i", `anullsrc=channel_layout=stereo:sample_rate=${AUDIO_FREQ}`);
   }
@@ -108,7 +121,7 @@ async function processOnePair({
   args.push("-filter_complex", filter);
   args.push("-map", "[v]");
   args.push("-map", hasAudio ? "1:a" : "2:a");
-  args.push("-t", String(duration));
+  args.push("-t", String(targetDuration));
 
   if (useGPU && gpuEncoder && gpuEncoder !== "libx264") {
     args.push(
@@ -139,7 +152,7 @@ async function processOnePair({
   args.push(outputPath);
 
   await runner.spawnFfmpeg(args, {
-    totalDurationSec: duration,
+    totalDurationSec: targetDuration,
     message: `Render ${path.basename(outputPath)}`,
   });
 }
@@ -157,7 +170,7 @@ export async function runElderlyVideo(config) {
   } = config;
 
   if (!inputImages || !fs.existsSync(inputImages)) {
-    throw new Error("Folder ảnh nền không tồn tại.");
+    throw new Error("Folder ảnh/video nền không tồn tại.");
   }
   if (!inputVideos || !fs.existsSync(inputVideos)) {
     throw new Error("Folder video không tồn tại.");
@@ -171,11 +184,11 @@ export async function runElderlyVideo(config) {
     throw new Error("overlayHeight phải là số nguyên > 0.");
   }
 
-  const images = fs.readdirSync(inputImages)
-    .filter((n) => /\.(jpe?g|png)$/i.test(n))
+  const backgrounds = fs.readdirSync(inputImages)
+    .filter((n) => BG_ANY_EXT.test(n))
     .sort(naturalSort);
-  if (images.length === 0) {
-    throw new Error("Folder ảnh không có file .jpg/.png.");
+  if (backgrounds.length === 0) {
+    throw new Error("Folder nền không có file .jpg/.png/.mp4.");
   }
 
   const videos = fs.readdirSync(inputVideos)
@@ -202,7 +215,7 @@ export async function runElderlyVideo(config) {
   const gpuEncoder = ffmpegConfig.encoder || "libx264";
 
   runner.log("info",
-    `Bắt đầu: ${todoVideos.length}/${videos.length} videos × ${images.length} ảnh nền ` +
+    `Bắt đầu: ${todoVideos.length}/${videos.length} videos × ${backgrounds.length} nền ` +
     `(anchor=${anchor}, overlay=${overlayWidth}×${overlayHeight}, offset=${offsetX},${offsetY}, ` +
     `${useGPU ? `GPU=${gpuEncoder}` : "CPU=libx264 ultrafast"})`
   );
@@ -214,13 +227,13 @@ export async function runElderlyVideo(config) {
     runner.checkAborted();
     const videoName = todoVideos[i];
     const originalIdx = videos.indexOf(videoName);
-    const imageName = images[originalIdx % images.length];
+    const backgroundName = backgrounds[originalIdx % backgrounds.length];
     const videoBase = path.basename(videoName, path.extname(videoName));
     const outputPath = path.join(output, `${videoBase}.mp4`);
 
     try {
       await processOnePair({
-        imagePath: path.join(inputImages, imageName),
+        backgroundPath: path.join(inputImages, backgroundName),
         videoPath: path.join(inputVideos, videoName),
         outputPath,
         anchor, overlayWidth, overlayHeight, offsetX, offsetY,
@@ -234,10 +247,10 @@ export async function runElderlyVideo(config) {
       } catch (err) {
         runner.log("warn", `Không ghi được _processed.json: ${err.message}`);
       }
-      runner.log("info", `OK ${videoName} ← ${imageName}`);
+      runner.log("info", `OK ${videoName} ← ${backgroundName}`);
     } catch (err) {
       if (err.name === "AbortError") throw err;
-      errors.push({ video: videoName, image: imageName, message: err.message });
+      errors.push({ video: videoName, background: backgroundName, message: err.message });
       runner.log("error", `${videoName} failed: ${err.message}`);
     }
 

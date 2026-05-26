@@ -10,6 +10,7 @@ const fixtures = path.join(__dirname, "fixtures");
 const tinyImage = path.join(fixtures, "tiny.png");
 const tinyVideo = path.join(fixtures, "tiny-with-audio.mp4");
 const tinySilentVideo = path.join(fixtures, "tiny-silent.mp4");
+const tinyMp4 = path.join(fixtures, "tiny.mp4");
 
 let tmpDir;
 beforeEach(() => { tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vm-elderly-")); });
@@ -70,7 +71,7 @@ describe("runElderlyVideo validation", () => {
       ...baseConfig(),
       inputImages: path.join(tmpDir, "no-such-folder"),
       inputVideos: tmpDir, output: tmpDir,
-    })).rejects.toThrow(/ảnh n.n/i);
+    })).rejects.toThrow(/n.n/i);
   });
 
   it("rejects when inputVideos does not exist", async () => {
@@ -97,7 +98,7 @@ describe("runElderlyVideo validation", () => {
     })).rejects.toThrow(/output/i);
   });
 
-  it("rejects when inputImages has no .jpg/.png files", async () => {
+  it("rejects when inputImages has no .jpg/.png/.mp4 files", async () => {
     const inputImages = path.join(tmpDir, "imgs");
     const inputVideos = path.join(tmpDir, "vids");
     fs.mkdirSync(inputImages); fs.mkdirSync(inputVideos);
@@ -105,7 +106,7 @@ describe("runElderlyVideo validation", () => {
     await expect(runElderlyVideo({
       ...baseConfig(),
       inputImages, inputVideos, output: path.join(tmpDir, "out"),
-    })).rejects.toThrow(/không có file .jpg/i);
+    })).rejects.toThrow(/không có file/i);
   });
 
   it("rejects when inputVideos has no .mp4 files", async () => {
@@ -245,4 +246,66 @@ describe("runElderlyVideo happy path", () => {
     expect(r.ok).toBe(true);
     expect(r.outputs).toHaveLength(0);
   }, 30_000);
+
+  it("uses .mp4 as background — bg shorter than overlay (bg loops to fill)", async () => {
+    const inputImages = path.join(tmpDir, "imgs");
+    const inputVideos = path.join(tmpDir, "vids");
+    const output = path.join(tmpDir, "out");
+    fs.mkdirSync(inputImages); fs.mkdirSync(inputVideos);
+    // bg = tiny.mp4 (1s silent), overlay = tiny-with-audio.mp4 (2s) → output 2s (overlay duration)
+    fs.copyFileSync(tinyMp4, path.join(inputImages, "bg.mp4"));
+    fs.copyFileSync(tinyVideo, path.join(inputVideos, "overlay.mp4"));
+
+    const r = await runElderlyVideo({
+      inputImages, inputVideos, output,
+      anchor: "center", overlayWidth: 320, overlayHeight: 180,
+    });
+
+    expect(r.ok).toBe(true);
+    expect(r.outputs).toHaveLength(1);
+    expect(fs.existsSync(path.join(output, "overlay.mp4"))).toBe(true);
+  }, 60_000);
+
+  it("uses .mp4 as background — bg longer than overlay (overlay loops to fill)", async () => {
+    const inputImages = path.join(tmpDir, "imgs");
+    const inputVideos = path.join(tmpDir, "vids");
+    const output = path.join(tmpDir, "out");
+    fs.mkdirSync(inputImages); fs.mkdirSync(inputVideos);
+    // bg = tiny-with-audio.mp4 (2s) used as bg, overlay = tiny.mp4 (1s silent) → output 2s (bg duration)
+    fs.copyFileSync(tinyVideo, path.join(inputImages, "bg.mp4"));
+    fs.copyFileSync(tinyMp4, path.join(inputVideos, "overlay.mp4"));
+
+    const r = await runElderlyVideo({
+      inputImages, inputVideos, output,
+      anchor: "bottom-right", overlayWidth: 160, overlayHeight: 90,
+    });
+
+    expect(r.ok).toBe(true);
+    expect(r.outputs).toHaveLength(1);
+    expect(fs.existsSync(path.join(output, "overlay.mp4"))).toBe(true);
+  }, 60_000);
+
+  it("mixed bg folder — pairs image bg + video bg via round-robin", async () => {
+    const inputImages = path.join(tmpDir, "imgs");
+    const inputVideos = path.join(tmpDir, "vids");
+    const output = path.join(tmpDir, "out");
+    fs.mkdirSync(inputImages); fs.mkdirSync(inputVideos);
+    fs.copyFileSync(tinyImage, path.join(inputImages, "01-bg.png"));
+    fs.copyFileSync(tinyMp4, path.join(inputImages, "02-bg.mp4"));
+    fs.copyFileSync(tinyVideo, path.join(inputVideos, "a.mp4"));
+    fs.copyFileSync(tinyVideo, path.join(inputVideos, "b.mp4"));
+    fs.copyFileSync(tinyVideo, path.join(inputVideos, "c.mp4"));
+
+    const r = await runElderlyVideo({
+      inputImages, inputVideos, output,
+      anchor: "center", overlayWidth: 160, overlayHeight: 90,
+    });
+
+    expect(r.ok).toBe(true);
+    expect(r.outputs).toHaveLength(3);
+    // a → 01-bg.png (image), b → 02-bg.mp4 (video), c → 01-bg.png (wrap)
+    expect(fs.existsSync(path.join(output, "a.mp4"))).toBe(true);
+    expect(fs.existsSync(path.join(output, "b.mp4"))).toBe(true);
+    expect(fs.existsSync(path.join(output, "c.mp4"))).toBe(true);
+  }, 120_000);
 });

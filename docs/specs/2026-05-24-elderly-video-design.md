@@ -1,22 +1,24 @@
 # VidMaster — Elderly Video (Video người già) — Design
 
-**Date**: 2026-05-24
+**Date**: 2026-05-24 (extended 2026-05-25: nền video)
 **Status**: Approved, ready for implementation plan
 **Owner**: cuongnguyen.ftdev
 
 ## 1. Mục tiêu
 
-Thêm task thứ 10 vào VidMaster: ghép một video overlay (.mp4) lên trên một ảnh nền tĩnh (.jpg/.png) ở một vị trí xác định, output là video 1280×720. Use case chính: nội dung "người già" trên YouTube — ảnh nền là tranh/câu chữ tĩnh, video overlay là người nói chuyện đặt ở góc.
+Thêm task thứ 10 vào VidMaster: ghép một video overlay (.mp4) lên trên một **nền tĩnh (.jpg/.png) hoặc nền video (.mp4)** ở một vị trí xác định, output là video 1280×720. Use case chính: nội dung "người già" trên YouTube — nền là tranh/câu chữ tĩnh hoặc cảnh video nhẹ, video overlay là người nói chuyện đặt ở góc.
 
 ## 2. Phạm vi
 
 **In scope:**
 - Task mới `elderlyVideo` xuất hiện trong sidebar nhóm Tasks.
-- Input: 1 folder ảnh (.jpg/.png) + 1 folder video (.mp4) + cấu hình vị trí + kích thước overlay.
-- Pairing tuần tự: `video[i]` ghép với `image[i % numImages]` (wrap quanh khi hết ảnh).
-- Output 1280×720, ảnh nền scale-cover (crop để lấp đầy), overlay video resize về WxH user nhập.
-- Audio lấy từ overlay video (volume 1.0). Nếu video không có audio → silent track.
-- Duration output = duration video.
+- Input: 1 folder nền hỗn hợp (.jpg/.png/.mp4) + 1 folder video overlay (.mp4) + cấu hình vị trí + kích thước overlay.
+- Pairing tuần tự: `video[i]` ghép với `background[i % numBackgrounds]` (wrap quanh khi hết nền).
+- Output 1280×720, nền scale-cover (crop để lấp đầy), overlay video resize về WxH user nhập.
+- Audio lấy từ overlay video (volume 1.0). Nếu video overlay không có audio → silent track. Audio của nền video (nếu có) luôn bị bỏ.
+- Duration output:
+  - Nền là image → duration = duration overlay.
+  - Nền là video → duration = `max(duration_bg, duration_overlay)`; nền hoặc overlay (cái ngắn hơn) sẽ được loop để fill.
 - Tên file output = `<videoBase>.mp4`. History `_processed.json` + heal từ disk để skip video đã xử lý.
 - Inherit GPU/encoder settings từ `settings.json` giống task `render`.
 - Persist last config (paths, anchor, overlay size, offset) qua electron-store.
@@ -35,8 +37,9 @@ Thêm task thứ 10 vào VidMaster: ghép một video overlay (.mp4) lên trên 
 
 **Approach A — clone pattern `render` đơn giản hoá, một ffmpeg call mỗi cặp**
 
-Mỗi cặp (image, video) → một ffmpeg invocation:
+Mỗi cặp (background, video) → một ffmpeg invocation. Pipeline branch theo extension của nền:
 
+**Nền là image (.jpg/.png):**
 ```
 ffmpeg -y \
   -loop 1 -framerate 30 -i <image> \
@@ -45,12 +48,30 @@ ffmpeg -y \
   -filter_complex "[0:v]scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720[bg];\
                    [1:v]scale=W:H[ov];[bg][ov]overlay=X:Y[v]" \
   -map "[v]" -map "1:a" (hoặc "-map 2:a" nếu silent) \
-  -t <video_duration> \
+  -t <overlay_duration> \
   -c:v <libx264|h264_nvenc|...> \
   -c:a aac -ar 44100 -ac 2 \
   -movflags +faststart \
   <output>
 ```
+
+**Nền là video (.mp4):**
+```
+ffmpeg -y \
+  -stream_loop -1 -i <bg_video> \
+  -stream_loop -1 -i <overlay_video> \
+  [-f lavfi -i anullsrc=...]  (chỉ khi overlay không có audio) \
+  -filter_complex "[0:v]scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720[bg];\
+                   [1:v]scale=W:H[ov];[bg][ov]overlay=X:Y[v]" \
+  -map "[v]" -map "1:a" (hoặc "-map 2:a" nếu silent) \
+  -t <max(bg_duration, overlay_duration)> \
+  -c:v <libx264|h264_nvenc|...> \
+  -c:a aac -ar 44100 -ac 2 \
+  -movflags +faststart \
+  <output>
+```
+
+Khác biệt giữa 2 nhánh chỉ ở input flags (`-loop 1 -framerate 30` cho image vs `-stream_loop -1` cho bg + overlay) và target duration. Filter graph giống nhau hoàn toàn.
 
 **Lý do:**
 - Khớp 100% pattern hiện có → reuse `TaskRunner`, `spawnFfmpeg` progress parser, queue manager, GPU detect, settings.

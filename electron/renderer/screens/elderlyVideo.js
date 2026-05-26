@@ -28,10 +28,10 @@ export async function renderElderlyVideo(el) {
 
   el.innerHTML = `
     <div class="screen-header">🧓 Video nền người già</div>
-    <p class="screen-subtitle">Ghép video overlay (.mp4) lên ảnh nền tĩnh (.jpg/.png). Output 1280×720, audio lấy từ video.</p>
+    <p class="screen-subtitle">Ghép video overlay (.mp4) lên ảnh hoặc video nền. Output 1280×720, audio lấy từ overlay. Với nền video: duration = max(bg, overlay), nền/overlay loop để fill.</p>
     <form id="task-form">
       <div class="field">
-        <label>📁 Folder ảnh nền (.jpg/.png)</label>
+        <label>📁 Folder ảnh / video nền (.jpg/.png/.mp4)</label>
         <div class="field-row">
           <input id="input-images" type="text" value="${escapeAttr(lastImages)}" required>
           <button type="button" data-pick="input-images">📂 Chọn…</button>
